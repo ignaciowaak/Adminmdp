@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proof - Administración y Pantalla en Vivo</title>
+  
+  <!-- Leaflet CSS & JS para Mapas -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <style>
+    :root { 
+      --bg-base: #f4f6f9; 
+      --primary: #0F3473; 
+      --primary-hover: #164699;
+      --white: #FFFFFF; 
+      --text-main: #333333;
+      --text-muted: #777777;
+      --border-color: rgba(15, 52, 115, 0.15);
+      --shadow-sm: 0 4px 12px rgba(15, 52, 115, 0.05);
+      --shadow-md: 0 8px 24px rgba(15, 52, 115, 0.1);
+      --radius: 16px;
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+      /* Paleta Modo Monitoreo (Matcha & Dusty Coal) */
+      --color-matcha: #C5D7C6;
+      --color-surface: #E8EEE8;
+      --color-coal: #222222;
+      --color-waiter: #d97706;
+      --color-menu: #2563eb;
+      --color-bill: #16a34a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+    
+    body { background: var(--bg-base); color: var(--text-main); padding: 30px 15px; transition: background 0.3s ease; }
+    body.monitor-mode-active { background: var(--color-matcha); color: var(--color-coal); }
+    
+    .container { 
+      max-width: 900px; 
+      margin: 0 auto; 
+    }
+    .container.monitor-wide {
+      max-width: 1180px;
+    }
+
+    /* Tarjetas tipo Dashboard */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 30px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 30px;
+      border: 1px solid var(--border-color);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 16px;
+    }
+
+    h2 { font-weight: 800; font-size: 1.6rem; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+    h3 { font-weight: 700; font-size: 1.2rem; color: var(--primary); margin-bottom: 16px; }
+
+    /* Formularios */
+    .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+    .form-group { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .form-group.full { width: 100%; flex: none; }
+    
+    label { font-weight: 700; font-size: 0.9rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    input, select, textarea { 
+      width: 100%; 
+      padding: 14px 16px; 
+      border: 2px solid var(--border-color); 
+      border-radius: 12px; 
+      font-size: 1rem; 
+      color: var(--text-main); 
+      background: #fafbfc;
+      outline: none; 
+      transition: var(--transition); 
+    }
+    
+    input:focus, textarea:focus, select:focus { 
+      border-color: var(--primary); 
+      background: var(--white);
+      box-shadow: 0 0 0 4px rgba(15, 52, 115, 0.1); 
+    }
+
+    /* Subida de archivos */
+    .custom-file-upload { 
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px; 
+      background: #f0f4f8; border: 2px dashed var(--primary); color: var(--primary); 
+      padding: 16px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; 
+      width: 100%; transition: var(--transition); text-align: center;
+    }
+    .custom-file-upload:hover { background: #e2eaf3; }
+    .custom-file-upload input { display: none; }
+    .file-name { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; font-weight: 600; text-align: center; }
+
+    #photo-preview-container { display: flex; gap: 10px; overflow-x: auto; margin-top: 10px; padding-bottom: 8px; }
+    #photo-preview-container img, #photo-preview-container video { width: 70px; height: 70px; object-fit: cover; border-radius: 10px; border: 2px solid var(--border-color); box-shadow: var(--shadow-sm); }
+
+    /* Mapa */
+    #admin-map { height: 300px; border-radius: 12px; border: 2px solid var(--border-color); z-index: 1; margin-top: 8px; }
+
+    /* Botones */
+    .btn { 
+      padding: 14px 24px; border: none; border-radius: 12px; 
+      background: var(--primary); color: var(--white); font-weight: 700; 
+      cursor: pointer; font-size: 1rem; transition: var(--transition); 
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      text-decoration: none;
+    }
+    .btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    
+    .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+    .btn-outline:hover { background: rgba(15, 52, 115, 0.05); color: var(--primary); }
+    
+    .btn-success { background: #2a9d8f; color: white; }
+    .btn-success:hover { background: #21867a; }
+
+    .btn-danger { background: #e63946; color: white; }
+    .btn-danger:hover { background: #c12a35; }
+    .btn-sm { padding: 8px 16px; font-size: 0.85rem; border-radius: 8px; }
+
+    /* Lista de Locales y Personal */
+    .list-item { 
+      display: flex; justify-content: space-between; align-items: flex-start; 
+      padding: 20px; border: 1px solid var(--border-color); border-radius: 16px; 
+      margin-bottom: 16px; background: #ffffff; transition: var(--transition);
+      gap: 20px; flex-wrap: wrap;
+    }
+    .list-item:hover { box-shadow: var(--shadow-sm); border-color: rgba(15, 52, 115, 0.3); }
+    
+    .qr-box { display: flex; flex-direction: column; align-items: center; gap: 8px; background: #f8f9fa; padding: 12px; border-radius: 12px; border: 1px dashed var(--border-color); min-width: 130px; }
+    .qr-box img { width: 100px; height: 100px; border-radius: 8px; }
+    .qr-box a { color: var(--primary); font-weight: 700; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; gap: 4px; }
+
+    .badge-role { background: rgba(15, 52, 115, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-left: 8px; }
+
+    /* Caja de Link de Monitoreo y Mesas */
+    .screen-url-banner {
+      background: #eef4fb;
+      border: 2px solid rgba(15, 52, 115, 0.25);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .screen-url-code {
+      font-family: monospace;
+      font-size: 0.88rem;
+      background: #ffffff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      color: var(--primary);
+      word-break: break-all;
+      font-weight: 700;
+    }
+    .tables-qr-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border-color);
+      width: 100%;
+    }
+    .table-qr-card {
+      background: #f8f9fa;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+    }
+    .table-qr-card img {
+      width: 96px;
+      height: 96px;
+      border-radius: 8px;
+      background: white;
+      padding: 4px;
+      border: 1px solid var(--border-color);
+    }
+    .table-qr-title {
+      font-weight: 800;
+      color: var(--primary);
+      font-size: 0.95rem;
+    }
+
+    /* ================= ESTILOS DE LA PANTALLA EN VIVO (BLOQUEADA SIN ACCESO A ADMIN) ================= */
+    @keyframes alertPulse {
+      0%, 100% { transform: translateY(0); box-shadow: 6px 6px 0px #222222; }
+      50% { transform: translateY(-3px); box-shadow: 9px 9px 0px #222222; }
+    }
+    @keyframes dotBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .monitor-topbar {
+      background: var(--color-surface);
+      border: 3px solid var(--color-coal);
+      border-radius: 24px;
+      padding: 20px 26px;
+      box-shadow: 6px 6px 0px var(--color-coal);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+    .live-badge {
+      background: var(--color-coal);
+      color: var(--color-surface);
+      padding: 8px 14px;
+      border-radius: 100px;
+      font-weight: 900;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: dotBlink 1.4s infinite;
+    }
+    .btn-neo {
+      padding: 12px 18px;
+      border: 2px solid var(--color-coal);
+      border-radius: 100px;
+      background: var(--color-surface);
+      color: var(--color-coal);
+      font-weight: 800;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 4px 4px 0px var(--color-coal);
+      transition: var(--transition);
+    }
+    .btn-neo:hover { transform: translateY(-2px); box-shadow: 6px 6px 0px var(--color-coal); }
+    .btn-neo.active-sound { background: var(--color-coal); color: var(--color-surface); }
+    .monitor-summary-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+    .monitor-stat-pill {
+      background: var(--color-surface);
+      border: 2px solid var(--color-coal);
+      border-radius: 20px;
+      padding: 18px 20px;
+      box-shadow: 4px 4px 0px var(--color-coal);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .monitor-requests-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .monitor-request-card {
+      background: #ffffff;
+      border: 3px solid var(--color-coal);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 6px 6px 0px var(--color-coal);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      animation: alertPulse 3s infinite ease-in-out;
+    }
+    .monitor-request-card.type-waiter { border-left: 12px solid var(--color-waiter); }
+    .monitor-request-card.type-menu { border-left: 12px solid var(--color-menu); }
+    .monitor-request-card.type-bill { border-left: 12px solid var(--color-bill); }
+    .table-big-badge {
+      background: var(--color-coal);
+      color: var(--color-surface);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      font-size: 1.3rem;
+      padding: 8px 18px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .alert-headline {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--color-coal);
+      line-height: 1.25;
+      padding: 14px 16px;
+      background: var(--color-surface);
+      border: 2px solid var(--color-coal);
+      border-radius: 16px;
+    }
+    .btn-attend {
+      width: 100%;
+      padding: 16px 20px;
+      border: 2px solid var(--color-coal);
+      border-radius: 16px;
+      background: var(--color-coal);
+      color: var(--color-surface);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      font-size: 1.02rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 4px 4px 0px var(--color-coal);
+      transition: var(--transition);
+    }
+    .btn-attend:hover { background: #16a34a; color: #fff; }
+    .empty-requests-box {
+      background: var(--color-surface);
+      border: 3px dashed var(--color-coal);
+      border-radius: 26px;
+      padding: 46px 24px;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .tables-overview-card {
+      background: var(--color-surface);
+      border: 3px solid var(--color-coal);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 4px 4px 0px var(--color-coal);
+    }
+    .tables-overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .table-status-tile {
+      padding: 14px 10px;
+      border-radius: 16px;
+      border: 2px solid var(--color-coal);
+      background: #ffffff;
+      text-align: center;
+      font-weight: 900;
+      box-shadow: 2px 2px 0px var(--color-coal);
+    }
+    .table-status-tile.has-alert {
+      background: var(--color-coal);
+      color: var(--color-surface);
+      box-shadow: 4px 4px 0px var(--color-coal);
+    }
+
+    /* Modal de confirmación in-page */
+    .confirm-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 52, 115, 0.45); backdrop-filter: blur(4px);
+      z-index: 9500; display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .confirm-overlay.active { display: flex; }
+    .confirm-card {
+      background: var(--white); border-radius: 16px; padding: 28px;
+      max-width: 420px; width: 100%; box-shadow: var(--shadow-md); text-align: center;
+    }
+
+    /* Toast Notification */
+    #toast { 
+      position: fixed; top: 20px; left: 50%; transform: translate(-50%, -120px); 
+      background: var(--primary); color: white; padding: 14px 28px; 
+      border-radius: 30px; font-weight: 700; z-index: 9999; box-shadow: var(--shadow-md);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex; align-items: center; gap: 10px; max-width: 92vw; text-align: center;
+    }
+    #toast.show { transform: translate(-50%, 0); }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toast-msg">Notificación</span></div>
+
+  <!-- Modal de Confirmación Seguro -->
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-card">
+      <h3 id="confirm-title" style="margin-bottom: 10px;">Confirmar acción</h3>
+      <p id="confirm-desc" style="color: var(--text-muted); margin-bottom: 22px; font-size: 0.95rem;"></p>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="window.closeConfirmModal()">Cancelar</button>
+        <button type="button" class="btn btn-danger btn-sm" id="confirm-accept-btn">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="main-container">
+    
+    <!-- ================= SECCIÓN 1: PANEL DE ADMINISTRACIÓN (EXCLUSIVO DUEÑO DE LA PLATAFORMA) ================= -->
+    <div id="admin-main-section">
+      
+      <!-- Dominio Base -->
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-link"></i> Configuración de Códigos QR y Link de Pantalla en Vivo</h2>
+        </div>
+        <div class="form-group full" style="margin: 0;">
+          <label>Dominio Público (Ej: https://proofofi.netlify.app)</label>
+          <input type="text" id="app-domain" value="https://proofofi.netlify.app" oninput="window.renderAdminList()">
+          <div class="file-name" style="text-align: left;"><i class="fa-solid fa-circle-info"></i> Usado para generar el QR de cada mesa y el link único de la pantalla en vivo para el restaurante (sin acceso al panel de admin).</div>
+        </div>
+      </div>
+
+      <!-- Banner de Link recién generado al crear un restaurante -->
+      <div id="last-created-banner" class="card hidden" style="border: 2px solid #2a9d8f; background: #f0fbf9;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+          <h3 style="color: #21867a; margin: 0;"><i class="fa-solid fa-circle-check"></i> ¡Restaurante Creado! Link de Pantalla en Vivo Listo</h3>
+          <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('last-created-banner').classList.add('hidden')">Cerrar</button>
+        </div>
+        <p style="font-size: 0.92rem; color: var(--text-main); margin-bottom: 10px;">
+          Envíale este link al dueño o mozos de <strong id="last-created-name"></strong>. Al entrar desde este link, <strong>solo verán la pantalla de pedidos en vivo</strong> y jamás podrán acceder a tu panel de administrador:
+        </p>
+        <div class="screen-url-code" id="last-created-url" style="margin-bottom: 12px;"></div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-success btn-sm" id="btn-copy-last-created">
+            <i class="fa-solid fa-copy"></i> Copiar Link de Pantalla en Vivo
+          </button>
+          <button type="button" class="btn btn-sm" id="btn-open-last-created">
+            <i class="fa-solid fa-tv"></i> Abrir Pantalla en Vivo
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulario Nuevo Local -->
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-store"></i> Crear Nuevo Local</h2>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group" style="flex: 2;">
+            <label>Nombre del Restaurante / Bar</label>
+            <input type="text" id="name" placeholder="Ej: Proof Café Central">
+          </div>
+          <div class="form-group">
+            <label>Categoría</label>
+            <select id="cat">
+              <option value="Gastronomía">Gastronomía</option>
+              <option value="Bar / Cervecería">Bar / Cervecería</option>
+              <option value="Cafetería">Cafetería</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label>Descripción Corta</label>
+          <textarea id="desc" rows="2" placeholder="Especialistas en café de especialidad..."></textarea>
+        </div>
+
+        <!-- SECCIÓN: GOOGLE MAPS Y CANTIDAD DE MESAS -->
+        <div style="background: #eef4fb; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(15, 52, 115, 0.2);">
+          <h3><i class="fa-solid fa-map-location-dot"></i> Google Maps y Configuración de Mesas</h3>
+          <div class="form-row" style="margin-bottom: 0;">
+            <div class="form-group" style="flex: 2;">
+              <label><i class="fa-brands fa-google"></i> URL de Google Maps del Restaurante</label>
+              <input type="text" id="googleMapsUrl" placeholder="Ej: https://maps.app.goo.gl/... o enlace de reseñas de Google Maps">
+              <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Al terminar de calificar, el cliente será dirigido automáticamente a esta dirección con su reseña copiada.</span>
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 180px;">
+              <label><i class="fa-solid fa-chair"></i> Cantidad de Mesas</label>
+              <input type="number" id="tableCount" min="1" max="200" value="10" placeholder="Ej: 10">
+              <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Se generarán automáticamente las mesas (Mesa 1 a N) y el link único de pantalla en vivo.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label>Fotos y Videos del Local (El primero será la portada)</label>
+          <label class="custom-file-upload">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Seleccionar Imágenes o Videos cortos
+            <input type="file" id="photos" accept="image/*,video/mp4,video/quicktime" multiple onchange="window.previewAdminPhotos(event)">
+          </label>
+          <div id="photo-preview-container"></div>
+        </div>
+
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+          <h3><i class="fa-solid fa-clock"></i> Horarios</h3>
+          <div class="form-row" style="margin-bottom: 0;">
+            <div class="form-group"><label>Apertura</label><input type="time" id="openTime" value="08:00"></div>
+            <div class="form-group"><label>Cierre</label><input type="time" id="closeTime" value="23:00"></div>
+            <div class="form-group" style="flex: 2;"><label>Texto Visible</label><input type="text" id="hoursDesc" placeholder="Lun a Dom de 08:00 a 23:00"></div>
+          </div>
+        </div>
+
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+          <h3><i class="fa-solid fa-hashtag"></i> Redes y Menú</h3>
+          <div class="form-row">
+            <div class="form-group"><label><i class="fa-brands fa-whatsapp"></i> WhatsApp</label><input type="text" id="whatsapp" placeholder="Ej: 549223..."></div>
+            <div class="form-group"><label><i class="fa-brands fa-instagram"></i> Instagram</label><input type="text" id="instagram" placeholder="https://ig..."></div>
+            <div class="form-group"><label><i class="fa-brands fa-facebook"></i> Facebook</label><input type="text" id="facebook" placeholder="https://fb..."></div>
+          </div>
+          
+          <div class="form-group full" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+            <label><i class="fa-solid fa-file-pdf"></i> Menú Digital (Sube un PDF o usa un Link)</label>
+            <input type="text" id="menu" placeholder="Link externo (Opcional si no subes archivo)" style="margin-bottom: 10px;">
+            <label class="custom-file-upload" style="padding: 12px; font-size: 0.9rem; background: var(--white);">
+              <i class="fa-solid fa-file-arrow-up"></i> Seleccionar Menú en PDF
+              <input type="file" id="menuFile" accept="application/pdf" onchange="document.getElementById('menuFileName').innerText = this.files[0] ? ('Archivo: ' + this.files[0].name) : ''">
+            </label>
+            <div id="menuFileName" class="file-name" style="color: var(--primary);"></div>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label>Ubicación (Busca la calle, haz clic en el mapa o usa tu GPS)</label>
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" id="address" placeholder="Ej: Güemes 3000, Mar del Plata">
+            <button type="button" onclick="window.searchAddress()" class="btn btn-outline" style="white-space: nowrap;"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+            <button type="button" onclick="window.useAdminGPS()" class="btn btn-outline" style="white-space: nowrap;" title="Usar ubicación actual"><i class="fa-solid fa-location-crosshairs"></i> GPS</button>
+          </div>
+          <div id="admin-map"></div>
+          <input type="hidden" id="lat" value="-38.0055"><input type="hidden" id="lng" value="-57.5426">
+        </div>
+
+        <button type="button" onclick="window.saveBusiness()" class="btn" style="width: 100%; font-size: 1.1rem; padding: 18px;" id="btn-save">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Restaurante y Generar Link de Pantalla en Vivo + QRs
+        </button>
+      </div>
+
+      <!-- Lista de Locales -->
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-list-check"></i> Locales Registrados</h2>
+        </div>
+        <div id="biz-list">
+          <p style="color: var(--text-muted); text-align: center; padding: 20px;">Cargando restaurantes...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SECCIÓN 2: GESTIÓN DE PERSONAL, MESAS Y DUEÑOS ================= -->
+    <div id="admin-manage-section" class="hidden">
+      
+      <button type="button" onclick="window.hideAdminManageSection()" class="btn btn-outline" style="margin-bottom: 20px;">
+        <i class="fa-solid fa-arrow-left"></i> Volver a la Lista
+      </button>
+      
+      <div class="card">
+        <div class="card-header">
+          <h2 id="manage-biz-title">Gestionar: Nombre del Local</h2>
+        </div>
+
+        <!-- Configuración de Google Maps, Mesas y Link de Monitoreo -->
+        <div style="background: #eef4fb; padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(15, 52, 115, 0.25);">
+          <h3><i class="fa-solid fa-tv"></i> Link de Pantalla en Vivo (Solo Pantalla, Sin Acceso a Admin)</h3>
+          <div class="screen-url-banner" style="background: var(--white);">
+            <span style="font-size: 0.8rem; font-weight: 800; color: var(--primary); text-transform: uppercase;">Link Único de Pantalla en Vivo (para enviar al dueño/mozos):</span>
+            <div class="screen-url-code" id="manage-screen-url-display"></div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-success btn-sm" onclick="window.copyActiveBizScreenUrl()">
+                <i class="fa-solid fa-copy"></i> Copiar Link de Pantalla en Vivo
+              </button>
+              <button type="button" class="btn btn-sm" onclick="window.openMonitorForBiz(window.adminActiveBizId)">
+                <i class="fa-solid fa-tv"></i> Abrir Pantalla en Vivo
+              </button>
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-top: 14px; margin-bottom: 8px;">
+            <div class="form-group" style="flex: 2; margin-bottom: 0;">
+              <label>URL de Google Maps del Restaurante</label>
+              <input type="text" id="manage-gmaps-url" placeholder="https://maps.app.goo.gl/...">
+            </div>
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+              <label>Cantidad de Mesas</label>
+              <input type="number" id="manage-table-count" min="1" max="200" value="10">
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm" style="margin-top: 10px;" onclick="window.updateBizTablesAndMaps()">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios de Mesas y Google Maps
+          </button>
+        </div>
+
+        <!-- Gestión de Staff -->
+        <div style="background: #f8f9fa; padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border-color);">
+          <h3><i class="fa-solid fa-user-tie"></i> Equipo / Personal</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">Agrega al personal para que los clientes puedan evaluarlos al escanear el QR.</p>
+          
+          <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+              <label>Nombre y Apellido</label>
+              <input type="text" id="adm-staff-name" placeholder="Ej: Mariana López">
+            </div>
+            <div class="form-group">
+              <label>Puesto / Rol</label>
+              <select id="adm-staff-role">
+                <option value="Mozo/a">Mozo/a</option>
+                <option value="Bartender">Bartender</option>
+                <option value="Encargado/a">Encargado/a</option>
+                <option value="Recepcionista">Recepcionista</option>
+                <option value="Sommelier">Sommelier</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group full">
+            <label>Foto de Perfil (Opcional pero recomendada)</label>
+            <label class="custom-file-upload" style="background: var(--white);">
+              <i class="fa-solid fa-camera"></i> Subir Foto del Empleado
+              <input type="file" id="adm-staff-photo-file" accept="image/*" onchange="document.getElementById('staffFileName').innerText = this.files[0] ? ('Foto lista: ' + this.files[0].name) : ''">
+            </label>
+            <div id="staffFileName" class="file-name" style="color: var(--primary);"></div>
+          </div>
+
+          <button type="button" onclick="window.addStaffMember()" class="btn" style="width: 100%;" id="btn-save-staff">
+            <i class="fa-solid fa-user-plus"></i> Agregar al Equipo
+          </button>
+          
+          <div id="admin-staff-list" style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;"></div>
+        </div>
+
+        <!-- Credenciales de Acceso para Dueños -->
+        <div style="background: #f8f9fa; padding: 24px; border-radius: 12px; border: 1px solid var(--border-color);">
+          <h3><i class="fa-solid fa-key"></i> Acceso Dashboard Dueños</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">Genera un usuario para que el dueño de este local vea sus estadísticas privadas.</p>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nombre de Usuario</label>
+              <input type="text" id="adm-owner-user" placeholder="Ej: admin_central">
+            </div>
+            <div class="form-group">
+              <label>Contraseña</label>
+              <input type="text" id="adm-owner-pass" placeholder="Clave segura">
+            </div>
+          </div>
+          
+          <button type="button" onclick="window.generateOwnerCredentials()" class="btn btn-outline" style="width: 100%;">
+            <i class="fa-solid fa-lock"></i> Generar Credenciales
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= SECCIÓN 3: PANTALLA EN VIVO AISLADA (SIN NINGÚN BOTÓN NI ACCESO AL PANEL DE ADMIN) ================= -->
+    <div id="admin-monitor-section" class="hidden">
+      <header class="monitor-topbar">
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <span class="live-badge"><span class="live-dot"></span> EN VIVO</span>
+          <div>
+            <h1 id="monitor-biz-name" style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.8rem; font-weight: 900; color: var(--color-coal); line-height: 1.1;">Restaurante</h1>
+            <div id="monitor-biz-meta" style="font-size: 0.9rem; font-weight: 700; color: rgba(34,34,34,0.7); margin-top: 2px;">Pantalla exclusiva de pedidos y llamados de mesas en vivo</div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <button type="button" class="btn-neo active-sound" id="btn-sound-toggle" onclick="window.toggleMonitorSound()">
+            <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+            <span id="sound-label">Sonido Activado</span>
+          </button>
+          <button type="button" class="btn-neo" id="btn-clear-all-requests" onclick="window.attendAllMonitorRequests()" style="display: none;">
+            <i class="fa-solid fa-check-double"></i> Marcar Todas Atendidas
+          </button>
+        </div>
+      </header>
+
+      <div class="monitor-summary-strip">
+        <div class="monitor-stat-pill">
+          <div>
+            <div style="font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Solicitudes Activas</div>
+            <div id="mon-count-total" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-coal);">0</div>
+          </div>
+          <i class="fa-solid fa-bell" style="font-size: 2rem; color: var(--color-coal);"></i>
+        </div>
+        <div class="monitor-stat-pill">
+          <div>
+            <div style="font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Llamando al Mozo</div>
+            <div id="mon-count-waiter" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-coal);">0</div>
+          </div>
+          <i class="fa-solid fa-hand-sparkles" style="font-size: 2rem; color: var(--color-waiter);"></i>
+        </div>
+        <div class="monitor-stat-pill">
+          <div>
+            <div style="font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Pidiendo el Menú</div>
+            <div id="mon-count-menu" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-coal);">0</div>
+          </div>
+          <i class="fa-solid fa-book-open" style="font-size: 2rem; color: var(--color-menu);"></i>
+        </div>
+        <div class="monitor-stat-pill">
+          <div>
+            <div style="font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Pidiendo la Cuenta</div>
+            <div id="mon-count-bill" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-coal);">0</div>
+          </div>
+          <i class="fa-solid fa-receipt" style="font-size: 2rem; color: var(--color-bill);"></i>
+        </div>
+      </div>
+
+      <!-- Tarjetas de Alertas de Mesas -->
+      <div id="monitor-requests-container"></div>
+
+      <!-- Mapa General de Mesas del Local -->
+      <div class="tables-overview-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.25rem; font-weight: 900; color: var(--color-coal); margin: 0;">
+            <i class="fa-solid fa-table-cells-large"></i> Estado de las Mesas del Restaurante
+          </h3>
+          <span id="monitor-tables-range" style="font-size: 0.88rem; font-weight: 800; color: rgba(34,34,34,0.7);"></span>
+        </div>
+        <div class="tables-overview-grid" id="monitor-tables-grid"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+    import { getDatabase, ref, push, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAhz1XHoprhhrHyYfuAdIYGMJxm5UsDO-4",
+      authDomain: "the-pic-c437e.firebaseapp.com",
+      databaseURL: "https://the-pic-c437e-default-rtdb.firebaseio.com",
+      projectId: "the-pic-c437e"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    try { signInAnonymously(auth).catch(() => {}); } catch (e) {}
+
+    const LOCAL_STORAGE_KEY = 'proof_businesses_backup_v1';
+    let syncChannel = null;
+    try { syncChannel = new BroadcastChannel('proof_realtime_sync'); } catch (e) {}
+
+    function loadLocalBackup() {
+      try {
+        const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) { return {}; }
+    }
+
+    function saveLocalBackup(dataObj) {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataObj || {}));
+        if (syncChannel) syncChannel.postMessage({ type: 'sync_businesses', data: dataObj });
+      } catch (e) {}
+    }
+
+    function mergeBusinessesData(fbData) {
+      const localData = loadLocalBackup();
+      const merged = { ...localData, ...(fbData || {}) };
+      Object.keys(localData).forEach(bId => {
+        if (merged[bId] && localData[bId]) {
+          merged[bId] = {
+            ...localData[bId],
+            ...merged[bId],
+            staff: { ...(localData[bId].staff || {}), ...(merged[bId].staff || {}) },
+            reviews: { ...(localData[bId].reviews || {}), ...(merged[bId].reviews || {}) },
+            tableRequests: {
+              ...(localData[bId].tableRequests || {}),
+              ...(fbData && fbData[bId] && fbData[bId].tableRequests ? fbData[bId].tableRequests : {})
+            }
+          };
+        }
+      });
+      return merged;
+    }
+
+    // Variables globales
+    let adminMap = null;
+    let adminMarker = null;
+    let globalBizData = loadLocalBackup();
+    let firebaseSnapshotData = {};
+    let openTablesPanelByBiz = {};
+    let pendingConfirmCallback = null;
+    window.adminActiveBizId = null;
+
+    // Detectar si se ingresó desde el link de Pantalla en Vivo (?monitor=ID o ?pantalla=ID)
+    const urlParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const initialMonitorBizId = urlParams.get('monitor') || urlParams.get('pantalla') || hashParams.get('monitor') || hashParams.get('pantalla');
+    let activeMonitorBizId = null;
+    let monitorSoundEnabled = true;
+    let knownMonitorTimestamps = {};
+    let monitorInitialLoaded = false;
+
+    function createInitialAvatarBase64(letter, bgColor = "#0F3473", fgColor = "#FFFFFF") {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 150;
+        canvas.height = 150;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, 150, 150);
+        ctx.fillStyle = fgColor;
+        ctx.font = "bold 64px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText((letter || "P").charAt(0).toUpperCase(), 75, 78);
+        return canvas.toDataURL('image/jpeg', 0.85);
+      } catch (e) {
+        return "";
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Si se entra desde el link de la pantalla en vivo, bloquear por completo el panel de admin y mostrar solo la pantalla
+      if (initialMonitorBizId) {
+        window.openMonitorForBiz(initialMonitorBizId);
+      } else {
+        initLeafletMap();
+      }
+
+      const acceptBtn = document.getElementById('confirm-accept-btn');
+      if (acceptBtn) {
+        acceptBtn.addEventListener('click', async () => {
+          const cb = pendingConfirmCallback;
+          window.closeConfirmModal();
+          if (cb) await cb();
+        });
+      }
+
+      if (!initialMonitorBizId) {
+        window.renderAdminList();
+      }
+
+      onValue(ref(db, 'businesses'), (snapshot) => {
+        firebaseSnapshotData = snapshot.val() || {};
+        globalBizData = mergeBusinessesData(firebaseSnapshotData);
+        saveLocalBackup(globalBizData);
+        if (!activeMonitorBizId) {
+          window.renderAdminList();
+          if (window.adminActiveBizId) window.renderManageStaffList();
+        } else {
+          renderActiveMonitor();
+        }
+      }, () => {
+        globalBizData = mergeBusinessesData(firebaseSnapshotData);
+        if (!activeMonitorBizId) window.renderAdminList();
+        else renderActiveMonitor();
+      });
+
+      if (syncChannel) {
+        syncChannel.onmessage = (ev) => {
+          if (ev.data && ev.data.type === 'sync_businesses') {
+            globalBizData = mergeBusinessesData(firebaseSnapshotData);
+            if (!activeMonitorBizId) {
+              window.renderAdminList();
+              if (window.adminActiveBizId) window.renderManageStaffList();
+            } else {
+              renderActiveMonitor();
+            }
+          }
+        };
+      }
+
+      window.addEventListener('storage', (ev) => {
+        if (ev.key === LOCAL_STORAGE_KEY) {
+          globalBizData = mergeBusinessesData(firebaseSnapshotData);
+          if (!activeMonitorBizId) {
+            window.renderAdminList();
+            if (window.adminActiveBizId) window.renderManageStaffList();
+          } else {
+            renderActiveMonitor();
+          }
+        }
+      });
+
+      setInterval(() => {
+        if (activeMonitorBizId) {
+          globalBizData = mergeBusinessesData(firebaseSnapshotData);
+          renderActiveMonitor();
+        }
+      }, 2000);
+    });
+
+    function initLeafletMap() {
+      if (adminMap || !document.getElementById('admin-map')) return;
+      try {
+        adminMap = L.map('admin-map').setView([-38.0055, -57.5426], 13);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(adminMap);
+        setMapMarker(-38.0055, -57.5426);
+        adminMap.on('click', (e) => { 
+          setMapMarker(e.latlng.lat, e.latlng.lng); 
+          if (!document.getElementById('address').value.trim()) {
+            document.getElementById('address').value = "Punto seleccionado en el mapa";
+          }
+        });
+      } catch (e) {}
+    }
+
+    /* =======================================================
+       FUNCIONES DE UTILIDAD
+       ======================================================= */
+    window.showToast = function(msg) { 
+      const t = document.getElementById('toast'); 
+      document.getElementById('toast-msg').innerText = msg;
+      t.classList.add('show'); 
+      setTimeout(() => t.classList.remove('show'), 3500); 
+    };
+
+    window.openConfirmModal = function(title, desc, onConfirm) {
+      document.getElementById('confirm-title').innerText = title;
+      document.getElementById('confirm-desc').innerText = desc;
+      pendingConfirmCallback = onConfirm;
+      document.getElementById('confirm-overlay').classList.add('active');
+    };
+
+    window.closeConfirmModal = function() {
+      pendingConfirmCallback = null;
+      document.getElementById('confirm-overlay').classList.remove('active');
+    };
+
+    window.copyTextToClipboard = async function(text, label = "Enlace copiado") {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          window.showToast(label);
+          return;
+        }
+      } catch (e) {}
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        window.showToast(label);
+      } catch (err) {
+        window.showToast("Copiado: " + text);
+      }
+    };
+
+    window.escapeHtml = function(s) { 
+      return s ? String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ""; 
+    };
+
+    function getCleanBaseUrl() {
+      const el = document.getElementById('app-domain');
+      let baseUrl = (el && el.value ? el.value.trim() : '') || 'https://proofofi.netlify.app';
+      if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
+      if (!baseUrl.startsWith('http')) baseUrl = 'https://' + baseUrl;
+      return baseUrl;
+    }
+
+    // Construye el Link Único de Pantalla en Vivo para el dueño del restaurante (funciona tanto en /?pantalla=ID como en /admin.html?monitor=ID, sin acceso a admin)
+    function buildMonitorUrlForBiz(bizId) {
+      const baseUrl = getCleanBaseUrl();
+      return `${baseUrl}/?pantalla=${encodeURIComponent(bizId)}`;
+    }
+
+    function generateTablesObject(count, bizId) {
+      const total = Math.max(1, parseInt(count, 10) || 1);
+      const tablesObj = {};
+      for (let i = 1; i <= total; i++) {
+        tablesObj[`mesa_${i}`] = {
+          number: i,
+          name: `Mesa ${i}`,
+          bizId: bizId || ""
+        };
+      }
+      return tablesObj;
+    }
+
+    function setMapMarker(lat, lng) {
+      const latEl = document.getElementById('lat');
+      const lngEl = document.getElementById('lng');
+      if (latEl) latEl.value = lat; 
+      if (lngEl) lngEl.value = lng;
+      if (!adminMap) return;
+      try {
+        const icon = L.divIcon({ 
+          className: '', 
+          html: "<div style='background:var(--primary); width:20px; height:20px; border-radius:50%; border:3px solid #fff; box-shadow:0 4px 10px rgba(15,52,115,0.4);'></div>", 
+          iconSize: [20,20] 
+        });
+        if(adminMarker) adminMarker.setLatLng([lat, lng]); 
+        else adminMarker = L.marker([lat, lng], {icon}).addTo(adminMap);
+        adminMap.setView([lat, lng], 15);
+      } catch (e) {}
+    }
+
+    function fileToBase64Compress(file) {
+      return new Promise((resolve) => {
+        try {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              try {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600; 
+                let scaleSize = 1;
+                if (img.width > MAX_WIDTH) scaleSize = MAX_WIDTH / img.width;
+                canvas.width = Math.max(1, Math.round(img.width * scaleSize));
+                canvas.height = Math.max(1, Math.round(img.height * scaleSize));
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.7));
+              } catch(err) { resolve(e.target.result); }
+            };
+            img.onerror = () => resolve(e.target.result);
+            img.src = e.target.result;
+          };
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(file);
+        } catch (err) {
+          resolve(null);
+        }
+      });
+    }
+
+    function fileToRawBase64(file) {
+      return new Promise((resolve) => {
+        try {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(file);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+
+    /* =======================================================
+       UBICACIÓN Y MAPA
+       ======================================================= */
+    window.previewAdminPhotos = function(event) {
+      const container = document.getElementById('photo-preview-container');
+      container.innerHTML = ""; 
+      const files = event.target.files;
+      for(let i=0; i<files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        reader.onload = e => {
+          if (file.type.startsWith('video/')) {
+            const vid = document.createElement('video');
+            vid.src = e.target.result;
+            vid.autoplay = true;
+            vid.loop = true;
+            vid.muted = true;
+            container.appendChild(vid);
+          } else {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            container.appendChild(img);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    window.searchAddress = async function() {
+      const q = document.getElementById('address').value.trim(); 
+      if(!q) return;
+      window.showToast("Buscando en mapa...");
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if(data && data.length > 0) { 
+          setMapMarker(parseFloat(data[0].lat), parseFloat(data[0].lon)); 
+          window.showToast("Ubicación encontrada"); 
+        } else {
+          window.showToast("Ubicación asignada en el mapa");
+        }
+      } catch(e) {
+        window.showToast("Ubicación lista");
+      }
+    };
+
+    window.useAdminGPS = function() {
+      if ("geolocation" in navigator) {
+        window.showToast("Obteniendo GPS...");
+        navigator.geolocation.getCurrentPosition((pos) => {
+          setMapMarker(pos.coords.latitude, pos.coords.longitude);
+          document.getElementById('address').value = "Ubicación GPS guardada";
+          window.showToast("¡GPS capturado!");
+        }, () => {
+          setMapMarker(-38.0055, -57.5426);
+          if (!document.getElementById('address').value.trim()) {
+            document.getElementById('address').value = "Mar del Plata";
+          }
+          window.showToast("Ubicación establecida en el mapa");
+        }, { enableHighAccuracy: true, timeout: 4000 });
+      }
+    };
+
+    /* =======================================================
+       CREAR LOCAL, MESAS, LINK DE PANTALLA EN VIVO Y QRs
+       ======================================================= */
+    window.saveBusiness = async function() {
+      const name = document.getElementById('name').value.trim(); 
+      const desc = document.getElementById('desc').value.trim();
+      const cat = document.getElementById('cat').value || "Gastronomía"; 
+      const hoursDesc = document.getElementById('hoursDesc').value.trim();
+      const openTime = document.getElementById('openTime').value || "08:00";
+      const closeTime = document.getElementById('closeTime').value || "23:00";
+      const address = document.getElementById('address').value.trim() || "Ubicación del Local";
+      
+      const googleMapsUrl = document.getElementById('googleMapsUrl').value.trim();
+      const tableCountRaw = parseInt(document.getElementById('tableCount').value, 10);
+      const tableCount = (!isNaN(tableCountRaw) && tableCountRaw > 0) ? tableCountRaw : 10;
+
+      const whatsapp = document.getElementById('whatsapp').value.trim();
+      const instagram = document.getElementById('instagram').value.trim();
+      const facebook = document.getElementById('facebook').value.trim();
+      
+      let menuData = document.getElementById('menu').value.trim(); 
+      const menuFileInput = document.getElementById('menuFile');
+
+      let lat = parseFloat(document.getElementById('lat').value); 
+      let lng = parseFloat(document.getElementById('lng').value);
+      if (isNaN(lat) || isNaN(lng)) {
+        lat = -38.0055;
+        lng = -57.5426;
+      }
+
+      const photoFiles = document.getElementById('photos').files;
+
+      if (!name) {
+        document.getElementById('name').focus();
+        return window.showToast("Ingresa el nombre del restaurante");
+      }
+      
+      const btn = document.getElementById('btn-save'); 
+      btn.disabled = true; 
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando restaurante...`;
+
+      try {
+        let photosArray = [];
+        for(let i = 0; i < photoFiles.length; i++) {
+          const file = photoFiles[i];
+          let b64 = null;
+          if (file.type.startsWith('video/')) {
+            if (file.size <= 7 * 1024 * 1024) {
+              b64 = await fileToRawBase64(file);
+            } else {
+              window.showToast("El video es muy pesado (>7MB), se guardarán las fotos y datos.");
+            }
+          } else {
+            b64 = await fileToBase64Compress(file);
+          }
+          if (b64) photosArray.push(b64);
+        }
+
+        if (menuFileInput.files && menuFileInput.files.length > 0) {
+          const pdfFile = menuFileInput.files[0];
+          if (pdfFile.size <= 7 * 1024 * 1024) {
+            const pdfB64 = await fileToRawBase64(pdfFile);
+            if (pdfB64) menuData = pdfB64;
+          } else {
+            window.showToast("El PDF supera los 7MB de Firebase; usa un PDF más liviano o un link externo.");
+          }
+        }
+
+        let newBizId = 'biz_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+        try {
+          const tempRef = push(ref(db, 'businesses'));
+          if (tempRef && tempRef.key) newBizId = tempRef.key;
+        } catch (e) {}
+
+        const monitorUrl = buildMonitorUrlForBiz(newBizId);
+        const tablesObj = generateTablesObject(tableCount, newBizId);
+
+        const payload = { 
+          name: name || "",
+          desc: desc || "",
+          category: cat || "Gastronomía",
+          hoursDesc: hoursDesc || "",
+          openTime: openTime || "08:00",
+          closeTime: closeTime || "23:00",
+          address: address || "",
+          lat: Number(lat),
+          lng: Number(lng),
+          googleMapsUrl: googleMapsUrl || "",
+          tableCount: Number(tableCount),
+          tables: tablesObj,
+          monitorUrl: monitorUrl,
+          whatsapp: whatsapp || "",
+          instagram: instagram || "",
+          facebook: facebook || "",
+          menu: menuData || "",
+          photos: photosArray,
+          photoBase64: photosArray.length > 0 ? photosArray[0] : "",
+          timestamp: Date.now()
+        };
+
+        try {
+          await set(ref(db, `businesses/${newBizId}`), payload);
+        } catch (fbErr) {
+          try {
+            const lightPhotos = photosArray.filter(p => !p.startsWith('data:video')).slice(0, 3);
+            const lightMenu = (menuData && menuData.startsWith('data:application/pdf') && menuData.length > 2500000) ? "" : menuData;
+            const lightPayload = {
+              ...payload,
+              menu: lightMenu,
+              photos: lightPhotos,
+              photoBase64: lightPhotos.length > 0 ? lightPhotos[0] : ""
+            };
+            await set(ref(db, `businesses/${newBizId}`), lightPayload);
+          } catch (fbErr2) {}
+        }
+
+        globalBizData[newBizId] = payload;
+        saveLocalBackup(globalBizData);
+        window.renderAdminList();
+
+        const banner = document.getElementById('last-created-banner');
+        document.getElementById('last-created-name').innerText = name;
+        document.getElementById('last-created-url').innerText = monitorUrl;
+        document.getElementById('btn-copy-last-created').onclick = () => window.copyTextToClipboard(monitorUrl, "Link de pantalla en vivo copiado");
+        document.getElementById('btn-open-last-created').onclick = () => window.openMonitorForBiz(newBizId);
+        banner.classList.remove('hidden');
+
+        window.showToast(`¡Restaurante guardado! Se generaron ${tableCount} mesas y el link de pantalla en vivo.`);
+        
+        document.getElementById('name').value = "";
+        document.getElementById('desc').value = "";
+        document.getElementById('googleMapsUrl').value = "";
+        document.getElementById('tableCount').value = "10";
+        document.getElementById('hoursDesc').value = "";
+        document.getElementById('whatsapp').value = "";
+        document.getElementById('instagram').value = "";
+        document.getElementById('facebook').value = "";
+        document.getElementById('menu').value = "";
+        document.getElementById('address').value = "";
+        document.getElementById('photos').value = "";
+        document.getElementById('menuFile').value = "";
+        document.getElementById('photo-preview-container').innerHTML = "";
+        document.getElementById('menuFileName').innerText = "";
+        setMapMarker(-38.0055, -57.5426);
+        
+      } catch(err) {
+        window.showToast("Error inesperado: " + (err && err.message ? err.message : "Intenta nuevamente"));
+      } finally {
+        btn.disabled = false; 
+        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Guardar Restaurante y Generar Link de Pantalla en Vivo + QRs`;
+      }
+    };
+
+    /* =======================================================
+       LISTADO DE LOCALES, LINK DE PANTALLA EN VIVO Y MESAS
+       ======================================================= */
+    window.toggleTablesQrPanel = function(bizId) {
+      openTablesPanelByBiz[bizId] = !openTablesPanelByBiz[bizId];
+      window.renderAdminList();
+    };
+
+    window.renderAdminList = function() {
+      const list = document.getElementById('biz-list'); 
+      if (!list) return;
+      list.innerHTML = "";
+      
+      const baseUrl = getCleanBaseUrl();
+      const sortedBiz = Object.entries(globalBizData).sort((a, b) => ((b[1] && b[1].timestamp) || 0) - ((a[1] && a[1].timestamp) || 0));
+
+      if (sortedBiz.length === 0) {
+        list.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px;">No hay restaurantes creados aún.</p>`;
+        return;
+      }
+
+      sortedBiz.forEach(([id, b]) => {
+        if (!b) return;
+        const qrUrl = `${baseUrl}/?biz=${id}`;
+        const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrUrl)}&margin=10`;
+        const monitorUrl = buildMonitorUrlForBiz(id);
+        const tableCount = parseInt(b.tableCount, 10) || (b.tables ? Object.keys(b.tables).length : 10);
+
+        let tablesGridHtml = "";
+        if (openTablesPanelByBiz[id] && tableCount > 0) {
+          tablesGridHtml += `<div class="tables-qr-grid">`;
+          for (let t = 1; t <= tableCount; t++) {
+            const tableQrTarget = `${baseUrl}/?biz=${id}&mesa=${t}`;
+            const tableQrImg = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(tableQrTarget)}&margin=8`;
+            tablesGridHtml += `
+              <div class="table-qr-card">
+                <div class="table-qr-title"><i class="fa-solid fa-chair"></i> Mesa ${t}</div>
+                <img src="${tableQrImg}" alt="QR Mesa ${t}">
+                <a href="${tableQrImg}" target="_blank" download="QR_${window.escapeHtml(b.name)}_Mesa_${t}" style="font-size:0.78rem; font-weight:700; color:var(--primary); text-decoration:none;">
+                  <i class="fa-solid fa-download"></i> Descargar QR
+                </a>
+                <button type="button" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:0.72rem; width:100%;" onclick="window.copyTextToClipboard('${tableQrTarget}', 'Link de Mesa ${t} copiado')">
+                  <i class="fa-solid fa-link"></i> Copiar Link
+                </button>
+              </div>`;
+          }
+          tablesGridHtml += `</div>`;
+        }
+
+        const gmapsBadge = b.googleMapsUrl
+          ? `<a href="${window.escapeHtml(b.googleMapsUrl)}" target="_blank" style="font-size:0.82rem; font-weight:700; color:#2a9d8f; text-decoration:none; display:inline-flex; align-items:center; gap:4px; margin-left:10px;"><i class="fa-solid fa-map-location-dot"></i> Google Maps configurado</a>`
+          : `<span style="font-size:0.8rem; color:var(--text-muted); margin-left:10px;"><i class="fa-solid fa-circle-exclamation"></i> Sin URL de Maps</span>`;
+
+        list.innerHTML += `
+          <div class="list-item">
+            <div style="flex:1; min-width: 260px;">
+              <div style="display:flex; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
+                <h3 style="margin-bottom:0;">${window.escapeHtml(b.name)}</h3>
+                <span class="badge-role"><i class="fa-solid fa-chair"></i> ${tableCount} Mesas</span>
+                ${gmapsBadge}
+              </div>
+              <p style="margin-bottom:12px; font-size:0.9rem; color:var(--text-muted);">
+                <i class="fa-solid fa-location-dot"></i> ${window.escapeHtml(b.address || 'Ubicación GPS')}
+              </p>
+
+              <!-- Link Único de Pantalla en Vivo (sin acceso al panel de admin) -->
+              <div class="screen-url-banner">
+                <span style="font-size:0.78rem; font-weight:800; color:var(--primary); text-transform:uppercase;">
+                  <i class="fa-solid fa-tv"></i> Link de Pantalla en Vivo (Para el Dueño / Mozos - Sin acceso a Admin):
+                </span>
+                <div class="screen-url-code">${window.escapeHtml(monitorUrl)}</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button type="button" class="btn btn-success btn-sm" onclick="window.copyTextToClipboard('${monitorUrl}', 'Link de pantalla en vivo copiado')">
+                    <i class="fa-solid fa-copy"></i> Copiar Link de Pantalla en Vivo
+                  </button>
+                  <button type="button" class="btn btn-sm" onclick="window.openMonitorForBiz('${id}')">
+                    <i class="fa-solid fa-display"></i> Abrir Pantalla en Vivo
+                  </button>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-sm" onclick="window.openManageBiz('${id}')">
+                  <i class="fa-solid fa-users-gear"></i> Gestionar Personal, Mesas y Accesos
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="window.toggleTablesQrPanel('${id}')">
+                  <i class="fa-solid fa-qrcode"></i> ${openTablesPanelByBiz[id] ? 'Ocultar QRs por Mesa' : 'Ver QRs de las ' + tableCount + ' Mesas'}
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="window.deleteBiz('${id}')">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            <div class="qr-box">
+              <span style="font-size:0.75rem; font-weight:800; color:var(--primary); text-transform:uppercase;">QR General</span>
+              <img src="${qrSrc}" alt="QR del Local">
+              <a href="${qrSrc}" target="_blank" download="QR_${window.escapeHtml(b.name)}">
+                <i class="fa-solid fa-download"></i> Descargar QR
+              </a>
+            </div>
+            ${tablesGridHtml}
+          </div>`;
+      });
+    };
+
+    window.deleteBiz = function(id) { 
+      window.openConfirmModal(
+        "Eliminar Restaurante",
+        "ATENCIÓN: ¿Seguro que deseas eliminar este local y todas sus reseñas, mesas y personal de forma permanente?",
+        async () => {
+          delete globalBizData[id];
+          saveLocalBackup(globalBizData);
+          window.renderAdminList();
+          try { await remove(ref(db, 'businesses/' + id)); } catch (e) {}
+          window.showToast("Local eliminado correctamente.");
+        }
+      );
+    };
+
+    /* =======================================================
+       GESTIÓN DE PERSONAL, MESAS Y MAPS (VISTA SECUNDARIA)
+       ======================================================= */
+    window.openManageBiz = function(id) {
+      window.adminActiveBizId = id;
+      const biz = globalBizData[id];
+      if(!biz) return;
+      
+      document.getElementById('admin-main-section').classList.add('hidden');
+      document.getElementById('admin-monitor-section').classList.add('hidden');
+      document.getElementById('admin-manage-section').classList.remove('hidden');
+      document.getElementById('manage-biz-title').innerText = `Gestión: ${biz.name}`;
+
+      const monitorUrl = buildMonitorUrlForBiz(id);
+      document.getElementById('manage-screen-url-display').innerText = monitorUrl;
+      document.getElementById('manage-gmaps-url').value = biz.googleMapsUrl || '';
+      document.getElementById('manage-table-count').value = biz.tableCount || (biz.tables ? Object.keys(biz.tables).length : 10);
+      
+      window.renderManageStaffList();
+    };
+
+    window.copyActiveBizScreenUrl = function() {
+      if (!window.adminActiveBizId) return;
+      const monitorUrl = buildMonitorUrlForBiz(window.adminActiveBizId);
+      window.copyTextToClipboard(monitorUrl, "Link de pantalla en vivo copiado");
+    };
+
+    window.updateBizTablesAndMaps = async function() {
+      if (!window.adminActiveBizId) return;
+      const gmapsUrl = document.getElementById('manage-gmaps-url').value.trim();
+      const countRaw = parseInt(document.getElementById('manage-table-count').value, 10);
+      const tableCount = (!isNaN(countRaw) && countRaw > 0) ? countRaw : 10;
+      const monitorUrl = buildMonitorUrlForBiz(window.adminActiveBizId);
+      const tablesObj = generateTablesObject(tableCount, window.adminActiveBizId);
+
+      const updates = {
+        googleMapsUrl: gmapsUrl,
+        tableCount: tableCount,
+        tables: tablesObj,
+        monitorUrl: monitorUrl
+      };
+
+      if (globalBizData[window.adminActiveBizId]) {
+        globalBizData[window.adminActiveBizId] = {
+          ...globalBizData[window.adminActiveBizId],
+          ...updates
+        };
+        saveLocalBackup(globalBizData);
+        window.renderAdminList();
+      }
+
+      try {
+        await update(ref(db, `businesses/${window.adminActiveBizId}`), updates);
+      } catch (e) {}
+
+      window.showToast(`Actualizado: ${tableCount} mesas y URL de Google Maps guardada`);
+    };
+
+    window.hideAdminManageSection = function() {
+      document.getElementById('admin-manage-section').classList.add('hidden');
+      document.getElementById('admin-monitor-section').classList.add('hidden');
+      document.getElementById('admin-main-section').classList.remove('hidden');
+      window.adminActiveBizId = null;
+      setTimeout(() => { if (adminMap) adminMap.invalidateSize(); else initLeafletMap(); }, 100);
+    };
+
+    window.addStaffMember = async function() {
+      const name = document.getElementById('adm-staff-name').value.trim();
+      const role = document.getElementById('adm-staff-role').value;
+      const photoFile = document.getElementById('adm-staff-photo-file');
+      
+      if(!name) return window.showToast("Ingresa el nombre del empleado");
+      
+      const btn = document.getElementById('btn-save-staff');
+      btn.disabled = true; 
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+
+      try {
+        let photoBase64 = createInitialAvatarBase64(name.charAt(0), "#0F3473", "#FFFFFF");
+        if (photoFile.files && photoFile.files.length > 0) {
+          const compressed = await fileToBase64Compress(photoFile.files[0]);
+          if (compressed) photoBase64 = compressed;
+        }
+
+        const staffId = 'st_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+        const staffEntry = {
+          name: name,
+          role: role || "Mozo/a",
+          photo: photoBase64 || ""
+        };
+
+        if (globalBizData[window.adminActiveBizId]) {
+          if (!globalBizData[window.adminActiveBizId].staff) globalBizData[window.adminActiveBizId].staff = {};
+          globalBizData[window.adminActiveBizId].staff[staffId] = staffEntry;
+          saveLocalBackup(globalBizData);
+          window.renderManageStaffList();
+        }
+
+        try {
+          await set(ref(db, `businesses/${window.adminActiveBizId}/staff/${staffId}`), staffEntry);
+        } catch (e) {}
+
+        document.getElementById('adm-staff-name').value = ""; 
+        document.getElementById('adm-staff-photo-file').value = "";
+        document.getElementById('staffFileName').innerText = "";
+        window.showToast("Miembro del equipo agregado");
+      } catch(e) {
+        window.showToast("Error al guardar empleado");
+      } finally {
+        btn.disabled = false; 
+        btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Agregar al Equipo`;
+      }
+    };
+
+    window.renderManageStaffList = function() {
+      const container = document.getElementById('admin-staff-list');
+      if (!container) return;
+      container.innerHTML = "";
+      
+      if (!window.adminActiveBizId) return;
+      const biz = globalBizData[window.adminActiveBizId];
+      
+      if(!biz || !biz.staff || Object.keys(biz.staff).length === 0) { 
+        container.innerHTML = "<p style='font-size:0.9rem; color:var(--text-muted);'>No hay personal registrado en este local.</p>"; 
+        return; 
+      }
+      
+      Object.entries(biz.staff).forEach(([sId, sData]) => {
+        if (!sData) return;
+        const roleBadge = sData.role ? `<span class="badge-role">${window.escapeHtml(sData.role)}</span>` : '';
+        const avatarSrc = sData.photo || createInitialAvatarBase64(sData.name || 'S');
+        
+        container.innerHTML += `
+          <div class="list-item" style="padding: 12px 16px; margin-bottom: 8px; align-items: center;">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <img src="${avatarSrc}" style="width:50px; height:50px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color);">
+              <div>
+                <strong style="font-size:1.05rem; color:var(--primary); display: block; margin-bottom:4px;">${window.escapeHtml(sData.name)}</strong>
+                ${roleBadge}
+              </div>
+            </div>
+            <button type="button" class="btn btn-danger btn-sm" onclick="window.deleteStaffMember('${sId}')" title="Eliminar Empleado">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>`;
+      });
+    };
+
+    window.deleteStaffMember = function(sId) {
+      window.openConfirmModal(
+        "Eliminar Miembro del Equipo",
+        "¿Seguro que deseas eliminar a este empleado del staff? Ya no podrá ser calificado.",
+        async () => {
+          if (globalBizData[window.adminActiveBizId] && globalBizData[window.adminActiveBizId].staff) {
+            delete globalBizData[window.adminActiveBizId].staff[sId];
+            saveLocalBackup(globalBizData);
+            window.renderManageStaffList();
+          }
+          try { await remove(ref(db, `businesses/${window.adminActiveBizId}/staff/${sId}`)); } catch (e) {}
+          window.showToast("Personal eliminado del sistema");
+        }
+      );
+    };
+
+    /* =======================================================
+       CREDENCIALES DASHBOARD DUEÑOS
+       ======================================================= */
+    window.generateOwnerCredentials = async function() {
+      const user = document.getElementById('adm-owner-user').value.trim();
+      const pass = document.getElementById('adm-owner-pass').value.trim();
+      
+      if(!user || !pass) return window.showToast("Ingresa un usuario y contraseña");
+
+      if (globalBizData[window.adminActiveBizId]) {
+        globalBizData[window.adminActiveBizId].credentials = { username: user, password: pass };
+        saveLocalBackup(globalBizData);
+      }
+
+      try {
+        await set(ref(db, `owners/${user}`), { 
+          password: pass, 
+          bizId: window.adminActiveBizId 
+        });
+        await set(ref(db, `businesses/${window.adminActiveBizId}/credentials`), { 
+          username: user, 
+          password: pass 
+        });
+      } catch(e) {}
+
+      window.showToast("Credenciales de acceso creadas/actualizadas");
+      document.getElementById('adm-owner-user').value = "";
+      document.getElementById('adm-owner-pass').value = "";
+    };
+
+    /* =========================================================================
+       PANTALLA EN VIVO AISLADA Y BLOQUEADA (SIN BOTÓN NI ACCESO AL PANEL ADMIN)
+       ========================================================================= */
+    function playMonitorChime() {
+      if (!monitorSoundEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const playTone = (freq, start, duration) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+          gain.gain.setValueAtTime(0.001, ctx.currentTime + start);
+          gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + start + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + start);
+          osc.stop(ctx.currentTime + start + duration);
+        };
+        playTone(659.25, 0, 0.22);
+        playTone(880.00, 0.20, 0.35);
+      } catch (e) {}
+    }
+
+    window.toggleMonitorSound = function() {
+      monitorSoundEnabled = !monitorSoundEnabled;
+      const btn = document.getElementById('btn-sound-toggle');
+      const icon = document.getElementById('sound-icon');
+      const label = document.getElementById('sound-label');
+      if (monitorSoundEnabled) {
+        btn.classList.add('active-sound');
+        icon.className = 'fa-solid fa-volume-high';
+        label.innerText = 'Sonido Activado';
+        playMonitorChime();
+      } else {
+        btn.classList.remove('active-sound');
+        icon.className = 'fa-solid fa-volume-xmark';
+        label.innerText = 'Sonido Silenciado';
+      }
+    };
+
+    window.openMonitorForBiz = function(bizId) {
+      activeMonitorBizId = bizId;
+      knownMonitorTimestamps = {};
+      monitorInitialLoaded = false;
+
+      // SEGURIDAD TOTAL: Eliminar físicamente del DOM el panel de administración
+      // para que jamás se pueda volver ni acceder al panel de administrador desde la pantalla en vivo
+      const mainSec = document.getElementById('admin-main-section');
+      const manageSec = document.getElementById('admin-manage-section');
+      if (mainSec) mainSec.remove();
+      if (manageSec) manageSec.remove();
+
+      document.body.classList.add('monitor-mode-active');
+      document.getElementById('main-container').classList.add('monitor-wide');
+      document.getElementById('admin-monitor-section').classList.remove('hidden');
+
+      // Listener directo en tiempo real al nodo del restaurante y a sus tableRequests
+      onValue(ref(db, `businesses/${bizId}`), (snap) => {
+        if (snap.exists()) {
+          globalBizData[bizId] = snap.val();
+          saveLocalBackup(globalBizData);
+          renderActiveMonitor();
+        }
+      });
+
+      onValue(ref(db, `businesses/${bizId}/tableRequests`), (snap) => {
+        const reqs = snap.val() || {};
+        if (!globalBizData[bizId]) globalBizData[bizId] = { name: "Restaurante", tableCount: 10 };
+        globalBizData[bizId].tableRequests = reqs;
+        renderActiveMonitor();
+      });
+
+      renderActiveMonitor();
+    };
+
+    function formatExactRequestSentence(tableNumber, type) {
+      if (type === 'waiter') return `Mesa ${tableNumber} está llamando al mozo.`;
+      if (type === 'menu') return `Mesa ${tableNumber} está pidiendo el menú.`;
+      if (type === 'bill') return `Mesa ${tableNumber} está pidiendo la cuenta.`;
+      return `Mesa ${tableNumber} solicita atención.`;
+    }
+
+    function formatTimeAgo(ts) {
+      if (!ts) return "Ahora mismo";
+      const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+      if (diffSec < 15) return "Recién enviado";
+      if (diffSec < 60) return `Hace ${diffSec} seg`;
+      const mins = Math.floor(diffSec / 60);
+      if (mins < 60) return `Hace ${mins} min`;
+      const hrs = Math.floor(mins / 60);
+      return `Hace ${hrs} h`;
+    }
+
+    function renderActiveMonitor() {
+      if (!activeMonitorBizId) return;
+      const biz = globalBizData[activeMonitorBizId];
+      if (!biz) {
+        document.getElementById('monitor-biz-name').innerText = "Conectando con el restaurante...";
+        return;
+      }
+
+      const totalTables = parseInt(biz.tableCount, 10) || (biz.tables ? Object.keys(biz.tables).length : 10);
+      document.getElementById('monitor-biz-name').innerText = biz.name || "Restaurante";
+      document.getElementById('monitor-biz-meta').innerText = `Pantalla en vivo exclusiva del local • ${totalTables} mesas configuradas`;
+      document.getElementById('monitor-tables-range').innerText = `Mesas 1 a ${totalTables}`;
+
+      const rawRequests = biz.tableRequests || {};
+      const validRequests = [];
+
+      Object.entries(rawRequests).forEach(([reqKey, reqVal]) => {
+        if (!reqVal) return;
+        if (reqVal.bizId && reqVal.bizId !== activeMonitorBizId) return;
+        if (reqVal.status && reqVal.status !== 'pending') return;
+        validRequests.push({ key: reqKey, ...reqVal });
+      });
+
+      let hasNewAlert = false;
+      validRequests.forEach(r => {
+        const prevTs = knownMonitorTimestamps[r.key];
+        if (!prevTs || r.timestamp > prevTs) {
+          knownMonitorTimestamps[r.key] = r.timestamp;
+          if (monitorInitialLoaded) hasNewAlert = true;
+        }
+      });
+      monitorInitialLoaded = true;
+
+      if (hasNewAlert) {
+        playMonitorChime();
+        const newest = [...validRequests].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
+        if (newest) {
+          window.showToast(newest.message || formatExactRequestSentence(newest.tableNumber, newest.type));
+        }
+      }
+
+      validRequests.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+      const countTotal = validRequests.length;
+      const countWaiter = validRequests.filter(r => r.type === 'waiter').length;
+      const countMenu = validRequests.filter(r => r.type === 'menu').length;
+      const countBill = validRequests.filter(r => r.type === 'bill').length;
+
+      document.getElementById('mon-count-total').innerText = countTotal;
+      document.getElementById('mon-count-waiter').innerText = countWaiter;
+      document.getElementById('mon-count-menu').innerText = countMenu;
+      document.getElementById('mon-count-bill').innerText = countBill;
+
+      document.getElementById('btn-clear-all-requests').style.display = countTotal > 0 ? 'inline-flex' : 'none';
+
+      const container = document.getElementById('monitor-requests-container');
+      const activeTablesMap = {};
+
+      if (countTotal === 0) {
+        container.innerHTML = `
+          <div class="empty-requests-box">
+            <i class="fa-solid fa-circle-check" style="font-size: 3.2rem; color: #4a7c59; margin-bottom: 12px;"></i>
+            <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.6rem; font-weight: 900; color: var(--color-coal); margin-bottom: 6px;">Todas las mesas están atendidas</h3>
+            <p style="color: rgba(34,34,34,0.7); font-weight: 600;">
+              Cuando un cliente presione «Llamar al mozo», «Pedir el menú» o «Pedir la cuenta», aparecerá aquí al instante.
+            </p>
+          </div>`;
+      } else {
+        let html = `<div class="monitor-requests-grid">`;
+        validRequests.forEach(r => {
+          const tNum = r.tableNumber || '?';
+          if (!activeTablesMap[tNum]) activeTablesMap[tNum] = [];
+          activeTablesMap[tNum].push(r.type);
+
+          const exactSentence = formatExactRequestSentence(tNum, r.type);
+          let iconClass = "fa-hand-sparkles";
+          let typeLabel = "Llamado al Mozo";
+          let typeColor = "var(--color-waiter)";
+
+          if (r.type === 'menu') {
+            iconClass = "fa-book-open";
+            typeLabel = "Solicitud de Menú";
+            typeColor = "var(--color-menu)";
+          } else if (r.type === 'bill') {
+            iconClass = "fa-receipt";
+            typeLabel = "Solicitud de Cuenta";
+            typeColor = "var(--color-bill)";
+          }
+
+          html += `
+            <div class="monitor-request-card type-${window.escapeHtml(r.type || 'waiter')}">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                  <span class="table-big-badge">
+                    <i class="fa-solid fa-chair"></i> MESA ${window.escapeHtml(tNum)}
+                  </span>
+                  <span style="font-size:0.85rem; font-weight:800; color:rgba(34,34,34,0.7);">
+                    <i class="fa-regular fa-clock"></i> ${formatTimeAgo(r.timestamp)}
+                  </span>
+                </div>
+
+                <div style="margin-top: 14px; margin-bottom: 10px;">
+                  <span style="display:inline-flex; align-items:center; gap:8px; font-weight:800; font-size:0.9rem; text-transform:uppercase; color:${typeColor};">
+                    <i class="fa-solid ${iconClass}"></i> ${typeLabel}
+                  </span>
+                </div>
+
+                <div class="alert-headline">
+                  ${window.escapeHtml(exactSentence)}
+                </div>
+              </div>
+
+              <button type="button" class="btn-attend" onclick="window.markMonitorRequestAttended('${window.escapeHtml(r.key)}', '${window.escapeHtml(tNum)}')">
+                <i class="fa-solid fa-check"></i> Marcar Mesa ${window.escapeHtml(tNum)} como Atendida
+              </button>
+            </div>`;
+        });
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+
+      const gridEl = document.getElementById('monitor-tables-grid');
+      let gridHtml = "";
+      for (let i = 1; i <= totalTables; i++) {
+        const activeTypes = activeTablesMap[i] || [];
+        const hasAlert = activeTypes.length > 0;
+        let stateLabel = "Sin solicitudes";
+        if (hasAlert) {
+          const labels = activeTypes.map(t => t === 'waiter' ? 'Mozo' : (t === 'menu' ? 'Menú' : 'Cuenta'));
+          stateLabel = labels.join(' + ');
+        }
+        gridHtml += `
+          <div class="table-status-tile ${hasAlert ? 'has-alert' : ''}">
+            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:1.05rem; display:block;">Mesa ${i}</span>
+            <span style="font-size:0.75rem; font-weight:700; opacity:0.85; margin-top:4px; display:block;">${window.escapeHtml(stateLabel)}</span>
+          </div>`;
+      }
+      gridEl.innerHTML = gridHtml;
+    }
+
+    window.markMonitorRequestAttended = async function(reqKey, tableNum) {
+      if (!activeMonitorBizId || !reqKey) return;
+      if (globalBizData[activeMonitorBizId] && globalBizData[activeMonitorBizId].tableRequests) {
+        delete globalBizData[activeMonitorBizId].tableRequests[reqKey];
+        saveLocalBackup(globalBizData);
+      }
+      delete knownMonitorTimestamps[reqKey];
+      renderActiveMonitor();
+      try {
+        await remove(ref(db, `businesses/${activeMonitorBizId}/tableRequests/${reqKey}`));
+      } catch (e) {}
+      window.showToast(`Mesa ${tableNum} marcada como atendida`);
+    };
+
+    window.attendAllMonitorRequests = async function() {
+      if (!activeMonitorBizId) return;
+      if (globalBizData[activeMonitorBizId]) {
+        globalBizData[activeMonitorBizId].tableRequests = {};
+        saveLocalBackup(globalBizData);
+      }
+      knownMonitorTimestamps = {};
+      renderActiveMonitor();
+      try {
+        await remove(ref(db, `businesses/${activeMonitorBizId}/tableRequests`));
+      } catch (e) {}
+      window.showToast("Todas las mesas fueron marcadas como atendidas");
+    };
+
+  </script>
+</body>
+</html>

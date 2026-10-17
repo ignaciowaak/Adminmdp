@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pantalla de Atención en Mesas - Proof</title>
+
+  <!-- FontAwesome Iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Tipografía Experta -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --color-matcha: #C5D7C6;
+      --color-surface: #E8EEE8;
+      --color-coal: #222222;
+      --color-gold: #cfa144;
+      --color-waiter: #d97706;
+      --color-menu: #2563eb;
+      --color-bill: #16a34a;
+      --color-urgent: #dc2626;
+
+      --bg-base: var(--color-matcha);
+      --surface-solid: #E8EEE8;
+      --primary: var(--color-coal);
+      --text-main: var(--color-coal);
+      --text-muted: rgba(34, 34, 34, 0.7);
+
+      --shadow-hard: 4px 4px 0px var(--color-coal);
+      --shadow-hard-lg: 6px 6px 0px var(--color-coal);
+      --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      --transition-fast: all 0.25s var(--spring);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body, html {
+      width: 100%;
+      min-height: 100vh;
+      background: var(--bg-base);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+    }
+    h1, h2, h3, h4, .brand, .btn, .alert-headline {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    @keyframes alertPulse {
+      0%, 100% { transform: translateY(0); box-shadow: 6px 6px 0px var(--color-coal); }
+      50% { transform: translateY(-3px); box-shadow: 9px 9px 0px var(--color-coal); }
+    }
+    @keyframes dotBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .screen-wrapper {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    /* === TOPBAR DE LA PANTALLA DEL RESTAURANTE === */
+    .topbar {
+      background: var(--surface-solid);
+      border: 3px solid var(--primary);
+      border-radius: 24px;
+      padding: 20px 26px;
+      box-shadow: var(--shadow-hard-lg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .live-badge {
+      background: var(--primary);
+      color: var(--surface-solid);
+      padding: 8px 14px;
+      border-radius: 100px;
+      font-weight: 900;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.5px;
+    }
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: dotBlink 1.4s infinite;
+    }
+    .biz-header-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--primary);
+      line-height: 1.1;
+    }
+    .biz-header-sub {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-neo {
+      padding: 12px 18px;
+      border: 2px solid var(--primary);
+      border-radius: 100px;
+      background: var(--surface-solid);
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-hard);
+      transition: var(--transition-fast);
+    }
+    .btn-neo:hover { transform: translateY(-2px); box-shadow: var(--shadow-hard-lg); }
+    .btn-neo:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--primary); }
+    .btn-neo.active-sound {
+      background: var(--primary);
+      color: var(--surface-solid);
+    }
+
+    /* === SELECTOR SI NO HAY ?biz= EN LA URL === */
+    #biz-selector-screen {
+      display: none;
+      background: var(--surface-solid);
+      border: 3px solid var(--primary);
+      border-radius: 28px;
+      padding: 36px 28px;
+      box-shadow: var(--shadow-hard-lg);
+      text-align: center;
+      max-width: 640px;
+      margin: 40px auto;
+    }
+    .selector-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .selector-item {
+      padding: 18px 22px;
+      background: #ffffff;
+      border: 2px solid var(--primary);
+      border-radius: 18px;
+      box-shadow: var(--shadow-hard);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 1.1rem;
+      transition: var(--transition-fast);
+    }
+    .selector-item:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-hard-lg);
+    }
+
+    /* === PANEL DE ESTADÍSTICAS Y FILTROS === */
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-pill {
+      background: var(--surface-solid);
+      border: 2px solid var(--primary);
+      border-radius: 20px;
+      padding: 18px 20px;
+      box-shadow: var(--shadow-hard);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stat-pill-label {
+      font-weight: 800;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .stat-pill-num {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      font-size: 2rem;
+      color: var(--primary);
+    }
+
+    /* === LISTA DE SOLICITUDES ACTIVAS (CARTELES GRANDES PARA MOZOS) === */
+    .requests-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+    .request-card {
+      background: #ffffff;
+      border: 3px solid var(--primary);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--shadow-hard-lg);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      animation: alertPulse 3s infinite ease-in-out;
+      position: relative;
+      overflow: hidden;
+    }
+    .request-card.type-waiter { border-left: 12px solid var(--color-waiter); }
+    .request-card.type-menu { border-left: 12px solid var(--color-menu); }
+    .request-card.type-bill { border-left: 12px solid var(--color-bill); }
+
+    .request-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .table-big-badge {
+      background: var(--primary);
+      color: var(--surface-solid);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      font-size: 1.35rem;
+      padding: 8px 18px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .request-time {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Mensaje exacto solicitado por el usuario */
+    .alert-headline {
+      font-size: 1.55rem;
+      font-weight: 900;
+      color: var(--primary);
+      line-height: 1.25;
+      padding: 12px 16px;
+      background: var(--surface-solid);
+      border: 2px solid var(--primary);
+      border-radius: 16px;
+    }
+
+    .request-type-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+    }
+
+    .btn-attend {
+      width: 100%;
+      padding: 16px 20px;
+      border: 2px solid var(--primary);
+      border-radius: 16px;
+      background: var(--primary);
+      color: var(--surface-solid);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      font-size: 1.05rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: var(--shadow-hard);
+      transition: var(--transition-fast);
+    }
+    .btn-attend:hover {
+      background: #16a34a;
+      transform: translateY(-2px);
+    }
+    .btn-attend:active {
+      transform: translate(2px, 2px);
+      box-shadow: 0 0 0 var(--primary);
+    }
+
+    .empty-requests-box {
+      background: var(--surface-solid);
+      border: 3px dashed var(--primary);
+      border-radius: 28px;
+      padding: 50px 24px;
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .empty-requests-box i {
+      font-size: 3.2rem;
+      color: #4a7c59;
+      margin-bottom: 14px;
+    }
+    .empty-requests-box h3 {
+      font-size: 1.6rem;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    /* === MAPA VISUAL DE MESAS DEL RESTAURANTE === */
+    .tables-overview-card {
+      background: var(--surface-solid);
+      border: 3px solid var(--primary);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--shadow-hard);
+    }
+    .tables-overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .table-status-tile {
+      padding: 16px 10px;
+      border-radius: 16px;
+      border: 2px solid var(--primary);
+      background: #ffffff;
+      text-align: center;
+      font-weight: 900;
+      transition: var(--transition-fast);
+      box-shadow: 2px 2px 0px var(--primary);
+    }
+    .table-status-tile.has-alert {
+      background: var(--primary);
+      color: var(--surface-solid);
+      box-shadow: var(--shadow-hard);
+    }
+    .table-status-tile .t-num {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.05rem;
+      display: block;
+    }
+    .table-status-tile .t-state {
+      font-size: 0.75rem;
+      font-weight: 700;
+      opacity: 0.85;
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translate(-50%, -150px);
+      background: var(--primary);
+      color: var(--surface-solid);
+      padding: 14px 26px;
+      border-radius: 100px;
+      font-weight: 900;
+      z-index: 9999;
+      border: 2px solid var(--surface-solid);
+      box-shadow: var(--shadow-hard-lg);
+      transition: transform 0.35s var(--spring);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toast.show { transform: translate(-50%, 0); }
+  </style>
+</head>
+<body>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="screen-wrapper">
+
+    <!-- CABECERA DEL MONITOR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="live-badge"><span class="live-dot"></span> EN VIVO</span>
+        <div>
+          <h1 class="biz-header-title" id="screen-biz-name">Cargando restaurante...</h1>
+          <div class="biz-header-sub" id="screen-biz-meta">Monitor exclusivo de atención de mesas</div>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button type="button" class="btn-neo" id="btn-sound-toggle" onclick="window.toggleSoundAlert()">
+          <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+          <span id="sound-label">Sonido Activado</span>
+        </button>
+        <button type="button" class="btn-neo" id="btn-clear-all" onclick="window.attendAllRequests()" style="display: none;">
+          <i class="fa-solid fa-check-double"></i> Marcar Todas Atendidas
+        </button>
+      </div>
+    </header>
+
+    <!-- PANTALLA DE SELECCIÓN SI SE ABRE SIN ?biz= -->
+    <section id="biz-selector-screen">
+      <i class="fa-solid fa-tv" style="font-size: 2.8rem; color: var(--primary); margin-bottom: 12px;"></i>
+      <h2 style="font-size: 1.7rem; font-weight: 900;">Selecciona la Pantalla del Restaurante</h2>
+      <p style="color: var(--text-muted); font-weight: 600; margin-top: 6px;">
+        Cada restaurante tiene su propia URL única (<code>pantalla.html?biz=ID</code>). Elige un local para abrir su monitor de mesas:
+      </p>
+      <div class="selector-list" id="selector-list"></div>
+    </section>
+
+    <!-- MONITOR PRINCIPAL DEL RESTAURANTE -->
+    <main id="monitor-main" style="display: none;">
+
+      <div class="summary-strip">
+        <div class="stat-pill">
+          <div>
+            <div class="stat-pill-label">Solicitudes Pendientes</div>
+            <div class="stat-pill-num" id="count-total">0</div>
+          </div>
+          <i class="fa-solid fa-bell" style="font-size: 2rem; color: var(--primary);"></i>
+        </div>
+        <div class="stat-pill">
+          <div>
+            <div class="stat-pill-label">Llamando al Mozo</div>
+            <div class="stat-pill-num" id="count-waiter">0</div>
+          </div>
+          <i class="fa-solid fa-hand-sparkles" style="font-size: 2rem; color: var(--color-waiter);"></i>
+        </div>
+        <div class="stat-pill">
+          <div>
+            <div class="stat-pill-label">Pidiendo el Menú</div>
+            <div class="stat-pill-num" id="count-menu">0</div>
+          </div>
+          <i class="fa-solid fa-book-open" style="font-size: 2rem; color: var(--color-menu);"></i>
+        </div>
+        <div class="stat-pill">
+          <div>
+            <div class="stat-pill-label">Pidiendo la Cuenta</div>
+            <div class="stat-pill-num" id="count-bill">0</div>
+          </div>
+          <i class="fa-solid fa-receipt" style="font-size: 2rem; color: var(--color-bill);"></i>
+        </div>
+      </div>
+
+      <!-- CONTENEDOR DE ALERTAS EN TIEMPO REAL -->
+      <div id="active-requests-container"></div>
+
+      <!-- ESTADO DE TODAS LAS MESAS DEL RESTAURANTE -->
+      <div class="tables-overview-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <h3 style="font-size: 1.25rem; font-weight: 900;"><i class="fa-solid fa-table-cells-large"></i> Mapa de Mesas del Restaurante</h3>
+          <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);" id="tables-total-label"></span>
+        </div>
+        <div class="tables-overview-grid" id="tables-overview-grid"></div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAhz1XHoprhhrHyYfuAdIYGMJxm5UsDO-4",
+      authDomain: "the-pic-c437e.firebaseapp.com",
+      databaseURL: "https://the-pic-c437e-default-rtdb.firebaseio.com",
+      projectId: "the-pic-c437e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentBizId = urlParams.get('biz');
+    let currentBizData = null;
+    let soundEnabled = true;
+    let knownRequestTimestamps = {};
+    let initialLoadDone = false;
+
+    window.escapeHtml = function(s) {
+      return s ? String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
+    };
+
+    window.showToast = function(msg, icon = "fa-bell") {
+      const t = document.getElementById('toast');
+      t.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${window.escapeHtml(msg)}</span>`;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3200);
+    };
+
+    // Alerta sonora sintetizada con Web Audio API (no requiere archivos externos)
+    function playNotificationChime() {
+      if (!soundEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+
+        const playTone = (freq, start, duration) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+          gain.gain.setValueAtTime(0.001, ctx.currentTime + start);
+          gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + start + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + start);
+          osc.stop(ctx.currentTime + start + duration);
+        };
+
+        playTone(659.25, 0, 0.22);    // Mi5
+        playTone(880.00, 0.20, 0.35); // La5
+      } catch (e) {}
+    }
+
+    window.toggleSoundAlert = function() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('btn-sound-toggle');
+      const icon = document.getElementById('sound-icon');
+      const label = document.getElementById('sound-label');
+      if (soundEnabled) {
+        btn.classList.add('active-sound');
+        icon.className = 'fa-solid fa-volume-high';
+        label.innerText = 'Sonido Activado';
+        playNotificationChime();
+      } else {
+        btn.classList.remove('active-sound');
+        icon.className = 'fa-solid fa-volume-xmark';
+        label.innerText = 'Sonido Silenciado';
+      }
+    };
+
+    function formatExactRequestSentence(tableNumber, type) {
+      if (type === 'waiter') return `Mesa ${tableNumber} está llamando al mozo.`;
+      if (type === 'menu') return `Mesa ${tableNumber} está pidiendo el menú.`;
+      if (type === 'bill') return `Mesa ${tableNumber} está pidiendo la cuenta.`;
+      return `Mesa ${tableNumber} solicita atención.`;
+    }
+
+    function formatTimeAgo(ts) {
+      if (!ts) return "Ahora mismo";
+      const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+      if (diffSec < 15) return "Recién enviado";
+      if (diffSec < 60) return `Hace ${diffSec} seg`;
+      const mins = Math.floor(diffSec / 60);
+      if (mins < 60) return `Hace ${mins} min`;
+      const hrs = Math.floor(mins / 60);
+      return `Hace ${hrs} h`;
+    }
+
+    // Conecta la pantalla exclusivamente al restaurante indicado por currentBizId
+    window.initRestaurantMonitor = function(bizId) {
+      currentBizId = bizId;
+      document.getElementById('biz-selector-screen').style.display = 'none';
+      document.getElementById('monitor-main').style.display = 'block';
+
+      // Escuchar únicamente el nodo de este restaurante para garantizar aislamiento total
+      onValue(ref(db, `businesses/${bizId}`), (snapshot) => {
+        if (!snapshot.exists()) {
+          document.getElementById('screen-biz-name').innerText = "Restaurante no encontrado";
+          document.getElementById('screen-biz-meta').innerText = "Verifica la URL generada desde el panel de administración.";
+          return;
+        }
+
+        currentBizData = snapshot.val();
+        document.getElementById('screen-biz-name').innerText = currentBizData.name || "Restaurante";
+        const totalTables = parseInt(currentBizData.tableCount, 10) || (currentBizData.tables ? Object.keys(currentBizData.tables).length : 10);
+        document.getElementById('screen-biz-meta').innerText = `Pantalla exclusiva del local • ${totalTables} mesas configuradas`;
+        document.getElementById('tables-total-label').innerText = `Mesas 1 a ${totalTables}`;
+
+        // Filtrar estrictamente las solicitudes que pertenezcan a este restaurante
+        const rawRequests = currentBizData.tableRequests || {};
+        const validRequests = [];
+
+        Object.entries(rawRequests).forEach(([reqKey, reqVal]) => {
+          if (!reqVal) return;
+          // Garantía doble de que la solicitud pertenece a este restaurante
+          if (reqVal.bizId && reqVal.bizId !== bizId) return;
+          if (reqVal.status && reqVal.status !== 'pending') return;
+
+          validRequests.push({
+            key: reqKey,
+            ...reqVal
+          });
+        });
+
+        // Detectar nuevas solicitudes para disparar sonido y aviso
+        let hasNewOrUpdated = false;
+        validRequests.forEach(r => {
+          const prevTs = knownRequestTimestamps[r.key];
+          if (!prevTs || r.timestamp > prevTs) {
+            knownRequestTimestamps[r.key] = r.timestamp;
+            if (initialLoadDone) {
+              hasNewOrUpdated = true;
+            }
+          }
+        });
+        initialLoadDone = true;
+
+        if (hasNewOrUpdated) {
+          playNotificationChime();
+          const newest = validRequests.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
+          if (newest) {
+            window.showToast(newest.message || formatExactRequestSentence(newest.tableNumber, newest.type), "fa-bell-concierge");
+          }
+        }
+
+        renderMonitorView(validRequests, totalTables);
+      });
+    };
+
+    function renderMonitorView(requests, totalTables) {
+      // Ordenar desde la más reciente o urgente
+      requests.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+      const countTotal = requests.length;
+      const countWaiter = requests.filter(r => r.type === 'waiter').length;
+      const countMenu = requests.filter(r => r.type === 'menu').length;
+      const countBill = requests.filter(r => r.type === 'bill').length;
+
+      document.getElementById('count-total').innerText = countTotal;
+      document.getElementById('count-waiter').innerText = countWaiter;
+      document.getElementById('count-menu').innerText = countMenu;
+      document.getElementById('count-bill').innerText = countBill;
+
+      const clearAllBtn = document.getElementById('btn-clear-all');
+      clearAllBtn.style.display = countTotal > 0 ? 'inline-flex' : 'none';
+
+      const container = document.getElementById('active-requests-container');
+      const activeTablesMap = {};
+
+      if (countTotal === 0) {
+        container.innerHTML = `
+          <div class="empty-requests-box">
+            <i class="fa-solid fa-circle-check"></i>
+            <h3>Todas las mesas están atendidas</h3>
+            <p style="color: var(--text-muted); font-weight: 600;">
+              Cuando un cliente presione «Llamar al mozo», «Pedir el menú» o «Pedir la cuenta», aparecerá aquí al instante.
+            </p>
+          </div>`;
+      } else {
+        let html = `<div class="requests-grid">`;
+        requests.forEach(r => {
+          const tNum = r.tableNumber || '?';
+          if (!activeTablesMap[tNum]) activeTablesMap[tNum] = [];
+          activeTablesMap[tNum].push(r.type);
+
+          const exactSentence = formatExactRequestSentence(tNum, r.type);
+          let iconClass = "fa-hand-sparkles";
+          let typeLabel = "Llamado al Mozo";
+          let typeColor = "var(--color-waiter)";
+
+          if (r.type === 'menu') {
+            iconClass = "fa-book-open";
+            typeLabel = "Solicitud de Menú";
+            typeColor = "var(--color-menu)";
+          } else if (r.type === 'bill') {
+            iconClass = "fa-receipt";
+            typeLabel = "Solicitud de Cuenta";
+            typeColor = "var(--color-bill)";
+          }
+
+          html += `
+            <div class="request-card type-${window.escapeHtml(r.type || 'waiter')}">
+              <div>
+                <div class="request-top">
+                  <span class="table-big-badge">
+                    <i class="fa-solid fa-chair"></i> MESA ${window.escapeHtml(tNum)}
+                  </span>
+                  <span class="request-time">
+                    <i class="fa-regular fa-clock"></i> ${formatTimeAgo(r.timestamp)}
+                  </span>
+                </div>
+
+                <div style="margin-top: 14px; margin-bottom: 10px;">
+                  <span class="request-type-tag" style="color: ${typeColor};">
+                    <i class="fa-solid ${iconClass}"></i> ${typeLabel}
+                  </span>
+                </div>
+
+                <div class="alert-headline">
+                  ${window.escapeHtml(exactSentence)}
+                </div>
+              </div>
+
+              <button type="button" class="btn-attend" onclick="window.markRequestAttended('${window.escapeHtml(r.key)}', '${window.escapeHtml(tNum)}')">
+                <i class="fa-solid fa-check"></i> Marcar Mesa ${window.escapeHtml(tNum)} como Atendida
+              </button>
+            </div>`;
+        });
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+
+      // Renderizar mapa visual de todas las mesas del restaurante
+      const gridEl = document.getElementById('tables-overview-grid');
+      let gridHtml = "";
+      for (let i = 1; i <= totalTables; i++) {
+        const activeTypes = activeTablesMap[i] || [];
+        const hasAlert = activeTypes.length > 0;
+        let stateLabel = "Sin solicitudes";
+        if (hasAlert) {
+          const labels = activeTypes.map(t => t === 'waiter' ? 'Mozo' : (t === 'menu' ? 'Menú' : 'Cuenta'));
+          stateLabel = labels.join(' + ');
+        }
+        gridHtml += `
+          <div class="table-status-tile ${hasAlert ? 'has-alert' : ''}">
+            <span class="t-num">Mesa ${i}</span>
+            <span class="t-state">${window.escapeHtml(stateLabel)}</span>
+          </div>`;
+      }
+      gridEl.innerHTML = gridHtml;
+    }
+
+    window.markRequestAttended = async function(reqKey, tableNum) {
+      if (!currentBizId || !reqKey) return;
+      try {
+        await remove(ref(db, `businesses/${currentBizId}/tableRequests/${reqKey}`));
+        delete knownRequestTimestamps[reqKey];
+        window.showToast(`Mesa ${tableNum} marcada como atendida`, "fa-check");
+      } catch (e) {
+        window.showToast("Error al actualizar solicitud", "fa-triangle-exclamation");
+      }
+    };
+
+    window.attendAllRequests = async function() {
+      if (!currentBizId) return;
+      try {
+        await remove(ref(db, `businesses/${currentBizId}/tableRequests`));
+        knownRequestTimestamps = {};
+        window.showToast("Todas las solicitudes fueron marcadas como atendidas", "fa-check-double");
+      } catch (e) {
+        window.showToast("No se pudieron limpiar las solicitudes", "fa-triangle-exclamation");
+      }
+    };
+
+    window.selectRestaurantScreen = function(bizId) {
+      const newUrl = `${window.location.pathname}?biz=${encodeURIComponent(bizId)}`;
+      window.history.replaceState({}, '', newUrl);
+      window.initRestaurantMonitor(bizId);
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btn-sound-toggle').classList.add('active-sound');
+
+      if (currentBizId) {
+        window.initRestaurantMonitor(currentBizId);
+      } else {
+        // Si se abre pantalla.html sin ?biz=, mostrar lista de restaurantes para elegir
+        document.getElementById('biz-selector-screen').style.display = 'block';
+        document.getElementById('screen-biz-name').innerText = "Seleccionar Restaurante";
+        onValue(ref(db, 'businesses'), (snap) => {
+          const allBiz = snap.val() || {};
+          const listEl = document.getElementById('selector-list');
+          listEl.innerHTML = "";
+          const entries = Object.entries(allBiz);
+          if (entries.length === 0) {
+            listEl.innerHTML = `<p style="color: var(--text-muted); font-weight: 700;">Todavía no hay restaurantes creados en el panel de administración.</p>`;
+            return;
+          }
+          entries.forEach(([bId, bData]) => {
+            const count = parseInt(bData.tableCount, 10) || 10;
+            const item = document.createElement('div');
+            item.className = 'selector-item';
+            item.onclick = () => window.selectRestaurantScreen(bId);
+            item.innerHTML = `
+              <div style="text-align: left;">
+                <div>${window.escapeHtml(bData.name || 'Restaurante')}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">${count} mesas configuradas</div>
+              </div>
+              <i class="fa-solid fa-arrow-right"></i>`;
+            listEl.appendChild(item);
+          });
+        });
+      }
+
+      // Actualizar contador de tiempo ("Hace X seg/min") cada 15 segundos
+      setInterval(() => {
+        if (currentBizId && currentBizData) {
+          const rawRequests = currentBizData.tableRequests || {};
+          const validRequests = Object.entries(rawRequests)
+            .filter(([_, r]) => r && (!r.bizId || r.bizId === currentBizId) && (!r.status || r.status === 'pending'))
+            .map(([k, r]) => ({ key: k, ...r }));
+          const totalTables = parseInt(currentBizData.tableCount, 10) || (currentBizData.tables ? Object.keys(currentBizData.tables).length : 10);
+          renderMonitorView(validRequests, totalTables);
+        }
+      }, 15000);
+    });
+  </script>
+</body>
+</html>
