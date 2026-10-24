@@ -799,6 +799,23 @@
     #toast.show { transform: translate(-50%, 0); }
     
     .hidden { display: none !important; }
+
+    /* Ocultar únicamente el cartel externo de "Powered by Netlify" sin tocar iframes de Firebase */
+    iframe[src*="netlify.com" i],
+    [id*="netlify" i],
+    [class*="netlify" i],
+    a[href*="netlify.com" i],
+    netlify-badge {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      position: fixed !important;
+      left: -9999px !important;
+      bottom: -9999px !important;
+    }
   </style>
 </head>
 <body>
@@ -1364,7 +1381,73 @@
       window.showToast("Usuario y clave generados");
     };
 
-    window.addEventListener('DOMContentLoaded', () => {
+    const FB_DB_URL = "https://the-pic-c437e-default-rtdb.firebaseio.com";
+
+    // Sincroniza cualquier negocio guardado localmente hacia Firebase para que los links de QRs abran en cualquier navegador/dispositivo
+    async function syncSingleBizToCloud(bizId, bizObj) {
+      if (!bizId || !bizObj || !bizObj.name) return;
+      const updatedMonitorUrl = buildMonitorUrlForBiz(bizId);
+      const payloadToSync = {
+        ...bizObj,
+        monitorUrl: updatedMonitorUrl
+      };
+      try {
+        const res = await fetch(`${FB_DB_URL}/businesses/${encodeURIComponent(bizId)}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloadToSync)
+        });
+        if (!res.ok) throw new Error("PUT failed");
+      } catch (e) {
+        try {
+          await set(ref(db, `businesses/${bizId}`), payloadToSync);
+        } catch (err2) {
+          try {
+            const lightPhotos = Array.isArray(bizObj.photos) ? bizObj.photos.filter(p => p && !p.startsWith('data:video')).slice(0, 3) : [];
+            const lightPayload = {
+              ...payloadToSync,
+              menu: (bizObj.menu && bizObj.menu.startsWith('data:application/pdf') && bizObj.menu.length > 2500000) ? "" : (bizObj.menu || ""),
+              photos: lightPhotos,
+              photoBase64: lightPhotos.length > 0 ? lightPhotos[0] : ""
+            };
+            await fetch(`${FB_DB_URL}/businesses/${encodeURIComponent(bizId)}.json`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(lightPayload)
+            });
+          } catch (err3) {}
+        }
+      }
+      if (bizObj.credentials && bizObj.credentials.username && bizObj.credentials.password) {
+        try {
+          fetch(`${FB_DB_URL}/owners/${encodeURIComponent(bizObj.credentials.username)}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: bizObj.credentials.password, bizId: bizId })
+          }).catch(() => {});
+        } catch (e) {}
+      }
+    }
+
+    async function ensureAllLocalBusinessesSyncedToCloud(cloudData) {
+      const localData = loadLocalBackup();
+      const cloud = cloudData || {};
+      for (const [bId, bVal] of Object.entries(localData)) {
+        if (bVal && bVal.name && (!cloud[bId] || !cloud[bId].name || (cloud[bId].monitorUrl && cloud[bId].monitorUrl.includes('proofofi.netlify.app')))) {
+          await syncSingleBizToCloud(bId, bVal);
+        }
+      }
+    }
+
+    function initProofAdminApp() {
+      if (window.__proofAdminBooted) return;
+      window.__proofAdminBooted = true;
+
+      const domInput = document.getElementById('app-domain');
+      if (domInput && (!domInput.value || domInput.value.includes('proofofi.netlify.app'))) {
+        domInput.value = 'https://proofmdp.netlify.app';
+      }
+
       const userInp = document.getElementById('newOwnerUser');
       if (userInp) {
         userInp.addEventListener('input', () => { userInp.dataset.manualEdited = 'true'; });
@@ -1394,10 +1477,35 @@
         window.renderAdminList();
       }
 
+      // Carga rápida inicial por HTTPS REST además de WebSockets
+      fetch(`${FB_DB_URL}/businesses.json`, { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && typeof data === 'object') {
+            firebaseSnapshotData = data;
+            globalBizData = mergeBusinessesData(firebaseSnapshotData);
+            saveLocalBackup(globalBizData);
+            if (!activeMonitorBizId) {
+              window.renderAdminList();
+              if (window.adminActiveBizId) {
+                window.renderManageStaffList();
+                window.renderManageTablesQrGrid();
+              }
+            } else if (monitorAuthenticated) {
+              renderActiveMonitor();
+            }
+          }
+          ensureAllLocalBusinessesSyncedToCloud(firebaseSnapshotData);
+        })
+        .catch(() => {
+          ensureAllLocalBusinessesSyncedToCloud(firebaseSnapshotData);
+        });
+
       onValue(ref(db, 'businesses'), (snapshot) => {
         firebaseSnapshotData = snapshot.val() || {};
         globalBizData = mergeBusinessesData(firebaseSnapshotData);
         saveLocalBackup(globalBizData);
+        ensureAllLocalBusinessesSyncedToCloud(firebaseSnapshotData);
         if (!activeMonitorBizId) {
           window.renderAdminList();
           if (window.adminActiveBizId) {
@@ -1445,7 +1553,13 @@
           renderActiveMonitor();
         }
       }, 2000);
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', initProofAdminApp);
+    } else {
+      initProofAdminApp();
+    }
 
     function initLeafletMap() {
       if (adminMap || !document.getElementById('admin-map')) return;
@@ -1514,6 +1628,10 @@
     function getCleanBaseUrl() {
       const el = document.getElementById('app-domain');
       let baseUrl = (el && el.value ? el.value.trim() : '') || 'https://proofmdp.netlify.app';
+      if (baseUrl.includes('proofofi.netlify.app')) {
+        baseUrl = baseUrl.replace('proofofi.netlify.app', 'proofmdp.netlify.app');
+        if (el) el.value = baseUrl;
+      }
       if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
       if (!baseUrl.startsWith('http')) baseUrl = 'https://' + baseUrl;
       return baseUrl;
@@ -1780,6 +1898,7 @@
           timestamp: Date.now()
         };
 
+        await syncSingleBizToCloud(newBizId, payload);
         try {
           await set(ref(db, `businesses/${newBizId}`), payload);
           await set(ref(db, `owners/${ownerUsername}`), { password: ownerPassword, bizId: newBizId });
