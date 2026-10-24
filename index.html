@@ -2,32 +2,47 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - Proof</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Proof Admin Studio - Gestión y Pantalla en Vivo</title>
   
   <!-- Leaflet CSS & JS para Mapas -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   
-  <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
   
   <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   
   <style>
     :root { 
-      --bg-base: #f4f6f9; 
+      /* Sistema de Diseño UX/UI Experto */
+      --bg-base: #eef2f6; 
+      --surface-card: #ffffff;
+      --surface-muted: #f8fafc;
       --primary: #0F3473; 
       --primary-hover: #164699;
-      --white: #FFFFFF; 
-      --text-main: #333333;
-      --text-muted: #777777;
-      --border-color: rgba(15, 52, 115, 0.15);
-      --shadow-sm: 0 4px 12px rgba(15, 52, 115, 0.05);
-      --shadow-md: 0 8px 24px rgba(15, 52, 115, 0.1);
-      --radius: 16px;
-      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      --primary-soft: rgba(15, 52, 115, 0.08);
+      --accent-teal: #0d9488;
+      --accent-teal-hover: #0f766e;
+      --danger: #e11d48;
+      --danger-hover: #be123c;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      --border-strong: #0f172a;
+
+      --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --shadow-neo: 4px 4px 0px #0f172a;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      --transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
 
       /* Paleta Modo Monitoreo (Matcha & Dusty Coal) */
       --color-matcha: #C5D7C6;
@@ -38,132 +53,425 @@
       --color-bill: #16a34a;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
-    
-    body { background: var(--bg-base); color: var(--text-main); padding: 30px 15px; transition: background 0.3s ease; }
-    body.monitor-mode-active { background: var(--color-matcha); color: var(--color-coal); }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      padding: 20px 16px 60px;
+      min-height: 100vh;
+      transition: background 0.3s ease;
+    }
+    h1, h2, h3, h4, .brand-title, .btn, .step-badge {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      letter-spacing: -0.02em;
+    }
+    body.monitor-mode-active {
+      background: var(--color-matcha);
+      color: var(--color-coal);
+      padding: 24px 24px 60px;
+    }
     
     .container { 
-      max-width: 900px; 
+      max-width: 1220px; 
       margin: 0 auto; 
     }
     .container.monitor-wide {
-      max-width: 1180px;
+      max-width: 1440px;
+    }
+
+    /* === TOPBAR DEL PANEL DE ADMINISTRACIÓN === */
+    .admin-topbar {
+      background: var(--surface-card);
+      border: 2px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 18px 24px;
+      box-shadow: var(--shadow-neo);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--primary);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      box-shadow: 3px 3px 0px var(--border-strong);
+    }
+    .brand-title {
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+    .brand-sub {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .topbar-kpis {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .kpi-badge {
+      background: var(--surface-muted);
+      border: 1.5px solid var(--border-color);
+      border-radius: 100px;
+      padding: 8px 16px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .kpi-badge strong {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      color: var(--primary);
+      font-size: 0.95rem;
+    }
+
+    /* === BARRA COMPACTA DE DOMINIO PÚBLICO === */
+    .domain-strip {
+      background: var(--surface-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .domain-strip-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 0.88rem;
+      color: var(--primary);
+    }
+    .domain-input-wrap {
+      flex: 1;
+      min-width: 240px;
+      max-width: 460px;
+    }
+    .domain-input-wrap input {
+      padding: 10px 14px !important;
+      font-size: 0.92rem !important;
+      font-weight: 700;
+      border-radius: 10px !important;
+    }
+
+    /* === GRID PRINCIPAL EN ESCRITORIO Y MÓVIL === */
+    .admin-workspace-grid {
+      display: grid;
+      grid-template-columns: 1.12fr 0.88fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 1024px) {
+      .admin-workspace-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* Tarjetas tipo Dashboard */
     .card {
-      background: var(--white);
-      border-radius: var(--radius);
-      padding: 30px;
+      background: var(--surface-card);
+      border-radius: var(--radius-lg);
+      padding: 26px;
       box-shadow: var(--shadow-md);
-      margin-bottom: 30px;
-      border: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      border: 2px solid var(--border-strong);
+    }
+    @media (max-width: 600px) {
+      .card {
+        padding: 20px 16px;
+      }
     }
 
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
-      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 22px;
+      border-bottom: 2px solid #f1f5f9;
       padding-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
-    h2 { font-weight: 800; font-size: 1.6rem; color: var(--primary); display: flex; align-items: center; gap: 10px; }
-    h3 { font-weight: 700; font-size: 1.2rem; color: var(--primary); margin-bottom: 16px; }
+    h2 { font-weight: 900; font-size: 1.38rem; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+    h3 { font-weight: 800; font-size: 1.05rem; color: var(--primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+    /* Bloques de pasos numerados dentro del formulario */
+    .form-step-box {
+      background: var(--surface-muted);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      margin-bottom: 18px;
+      transition: var(--transition);
+    }
+    .form-step-box:focus-within {
+      border-color: var(--primary);
+      background: #ffffff;
+      box-shadow: 0 6px 20px rgba(15, 52, 115, 0.06);
+    }
+    .step-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .step-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 0.98rem;
+      color: var(--text-main);
+    }
+    .step-badge {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
 
     /* Formularios */
-    .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
-    .form-group { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .form-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+    .form-row:last-child { margin-bottom: 0; }
+    .form-group { flex: 1; min-width: 190px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
     .form-group.full { width: 100%; flex: none; }
     
-    label { font-weight: 700; font-size: 0.9rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
+    label { font-weight: 800; font-size: 0.78rem; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.4px; }
     
     input, select, textarea { 
       width: 100%; 
-      padding: 14px 16px; 
-      border: 2px solid var(--border-color); 
+      padding: 12px 15px; 
+      border: 1.8px solid var(--border-color); 
       border-radius: 12px; 
-      font-size: 1rem; 
+      font-size: 0.95rem; 
+      font-family: 'Inter', sans-serif;
       color: var(--text-main); 
-      background: #fafbfc;
+      background: #ffffff;
       outline: none; 
       transition: var(--transition); 
     }
     
     input:focus, textarea:focus, select:focus { 
       border-color: var(--primary); 
-      background: var(--white);
-      box-shadow: 0 0 0 4px rgba(15, 52, 115, 0.1); 
+      box-shadow: 0 0 0 3px rgba(15, 52, 115, 0.12); 
+    }
+
+    /* Selector interactivo de cantidad de mesas */
+    .stepper-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-stepper {
+      width: 42px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1.8px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-main);
+      font-weight: 900;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+    .btn-stepper:hover {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+    .preset-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .preset-pill {
+      padding: 5px 10px;
+      border-radius: 100px;
+      border: 1.5px solid var(--border-color);
+      background: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .preset-pill:hover {
+      border-color: var(--primary);
+      color: var(--primary);
     }
 
     /* Subida de archivos */
     .custom-file-upload { 
-      display: inline-flex; align-items: center; justify-content: center; gap: 10px; 
-      background: #f0f4f8; border: 2px dashed var(--primary); color: var(--primary); 
-      padding: 16px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; 
+      display: flex; align-items: center; justify-content: center; gap: 10px; 
+      background: #ffffff; border: 2px dashed var(--primary); color: var(--primary); 
+      padding: 15px 20px; border-radius: 14px; font-weight: 800; font-size: 0.9rem; cursor: pointer; 
       width: 100%; transition: var(--transition); text-align: center;
     }
-    .custom-file-upload:hover { background: #e2eaf3; }
+    .custom-file-upload:hover { background: var(--primary-soft); transform: translateY(-1px); }
     .custom-file-upload input { display: none; }
-    .file-name { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; font-weight: 600; text-align: center; }
+    .file-name { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; font-weight: 600; }
 
-    #photo-preview-container { display: flex; gap: 10px; overflow-x: auto; margin-top: 10px; padding-bottom: 8px; }
-    #photo-preview-container img, #photo-preview-container video { width: 70px; height: 70px; object-fit: cover; border-radius: 10px; border: 2px solid var(--border-color); box-shadow: var(--shadow-sm); }
+    #photo-preview-container { display: flex; gap: 10px; overflow-x: auto; margin-top: 10px; padding-bottom: 6px; }
+    .preview-thumb-box {
+      position: relative;
+      width: 78px;
+      height: 78px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid var(--border-strong);
+      flex-shrink: 0;
+      background: #000;
+    }
+    .preview-thumb-box img, .preview-thumb-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .preview-thumb-tag {
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      right: 4px;
+      background: rgba(15, 23, 42, 0.85);
+      color: #fff;
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-align: center;
+      padding: 2px 4px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
 
     /* Mapa */
-    #admin-map { height: 300px; border-radius: 12px; border: 2px solid var(--border-color); z-index: 1; margin-top: 8px; }
+    #admin-map { height: 250px; border-radius: 14px; border: 2px solid var(--border-color); z-index: 1; margin-top: 8px; }
 
     /* Botones */
     .btn { 
-      padding: 14px 24px; border: none; border-radius: 12px; 
-      background: var(--primary); color: var(--white); font-weight: 700; 
-      cursor: pointer; font-size: 1rem; transition: var(--transition); 
+      padding: 13px 20px; border: 2px solid var(--border-strong); border-radius: 14px; 
+      background: var(--primary); color: #ffffff; font-weight: 800; 
+      cursor: pointer; font-size: 0.94rem; transition: var(--transition); 
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
       text-decoration: none;
+      box-shadow: 3px 3px 0px var(--border-strong);
     }
-    .btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-    .btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    .btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 5px 5px 0px var(--border-strong); }
+    .btn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px var(--border-strong); }
+    .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none; }
     
-    .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
-    .btn-outline:hover { background: rgba(15, 52, 115, 0.05); color: var(--primary); }
+    .btn-outline { background: #ffffff; color: var(--text-main); border: 2px solid var(--border-strong); }
+    .btn-outline:hover { background: var(--surface-muted); color: var(--primary); }
     
-    .btn-success { background: #2a9d8f; color: white; }
-    .btn-success:hover { background: #21867a; }
+    .btn-success { background: var(--accent-teal); color: white; }
+    .btn-success:hover { background: var(--accent-teal-hover); }
 
-    .btn-danger { background: #e63946; color: white; }
-    .btn-danger:hover { background: #c12a35; }
-    .btn-sm { padding: 8px 16px; font-size: 0.85rem; border-radius: 8px; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-sm { padding: 8px 14px; font-size: 0.82rem; border-radius: 10px; box-shadow: 2px 2px 0px var(--border-strong); }
 
-    /* Lista de Locales y Personal */
+    /* Tarjetas de Locales Registrados */
     .list-item { 
       display: flex; flex-direction: column;
-      padding: 22px; border: 1px solid var(--border-color); border-radius: 16px; 
-      margin-bottom: 18px; background: #ffffff; transition: var(--transition);
+      padding: 20px; border: 2px solid var(--border-strong); border-radius: 18px; 
+      margin-bottom: 16px; background: #ffffff; transition: var(--transition);
+      gap: 14px;
+      box-shadow: 4px 4px 0px rgba(15, 23, 42, 0.08);
+    }
+    .list-item:hover { box-shadow: 5px 5px 0px var(--border-strong); }
+
+    .biz-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .biz-card-identity {
+      display: flex;
+      align-items: center;
       gap: 14px;
     }
-    .list-item:hover { box-shadow: var(--shadow-sm); border-color: rgba(15, 52, 115, 0.3); }
+    .biz-card-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      object-fit: cover;
+      border: 2px solid var(--border-strong);
+      background: var(--surface-muted);
+      flex-shrink: 0;
+    }
+    .badge-role {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border: 1.5px solid rgba(15, 52, 115, 0.2);
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
 
-    .badge-role { background: rgba(15, 52, 115, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-left: 8px; }
-
-    /* Caja de Link de Monitoreo y Mesas */
+    /* Caja de Link de Monitoreo y Credenciales */
     .screen-url-banner {
-      background: #eef4fb;
-      border: 2px solid rgba(15, 52, 115, 0.25);
-      border-radius: 12px;
-      padding: 14px 16px;
+      background: var(--surface-muted);
+      border: 1.8px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
     .screen-url-code {
       font-family: monospace;
-      font-size: 0.88rem;
+      font-size: 0.84rem;
       background: #ffffff;
       padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      border: 1.5px solid var(--border-color);
       color: var(--primary);
       word-break: break-all;
       font-weight: 700;
@@ -172,48 +480,54 @@
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
-      font-size: 0.88rem;
+      font-size: 0.84rem;
       background: #ffffff;
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px dashed var(--border-color);
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1.5px dashed var(--border-color);
       align-items: center;
     }
     .tables-qr-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-      gap: 14px;
-      margin-top: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
       padding-top: 14px;
-      border-top: 1px dashed var(--border-color);
+      border-top: 1.5px dashed var(--border-color);
       width: 100%;
     }
     .table-qr-card {
-      background: #f8f9fa;
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
+      background: var(--surface-muted);
+      border: 1.5px solid var(--border-color);
+      border-radius: 14px;
       padding: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
       gap: 6px;
+      transition: var(--transition);
+    }
+    .table-qr-card:hover {
+      border-color: var(--primary);
+      background: #ffffff;
+      transform: translateY(-2px);
     }
     .table-qr-card img {
-      width: 104px;
-      height: 104px;
-      border-radius: 8px;
+      width: 96px;
+      height: 96px;
+      border-radius: 10px;
       background: white;
       padding: 4px;
-      border: 1px solid var(--border-color);
+      border: 1.5px solid var(--border-color);
     }
     .table-qr-title {
-      font-weight: 800;
-      color: var(--primary);
-      font-size: 0.95rem;
+      font-weight: 900;
+      color: var(--text-main);
+      font-size: 0.9rem;
     }
 
-    /* ================= LOGIN PREVIO Y PANTALLA EN VIVO (SIN ACCESO A ADMIN JAMÁS) ================= */
+    /* ================= LOGIN PREVIO Y PANTALLA EN VIVO WIDESCREEN (PC + MOBILE) ================= */
     #monitor-login-gate {
       display: none;
       min-height: 82vh;
@@ -225,8 +539,8 @@
       background: var(--color-surface);
       border: 3px solid var(--color-coal);
       border-radius: 28px;
-      padding: 36px 28px;
-      max-width: 440px;
+      padding: 38px 30px;
+      max-width: 450px;
       width: 100%;
       box-shadow: 6px 6px 0px var(--color-coal);
       text-align: center;
@@ -237,7 +551,7 @@
       background: #ffffff;
       color: var(--color-coal);
       border-radius: 16px;
-      padding: 16px 20px;
+      padding: 15px 18px;
       font-weight: 700;
       margin-bottom: 12px;
     }
@@ -276,14 +590,14 @@
       background: var(--color-surface);
       border: 3px solid var(--color-coal);
       border-radius: 24px;
-      padding: 20px 26px;
+      padding: 20px 28px;
       box-shadow: 6px 6px 0px var(--color-coal);
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 16px;
-      margin-bottom: 26px;
+      margin-bottom: 24px;
     }
     .live-badge {
       background: var(--color-coal);
@@ -304,14 +618,25 @@
       background: #22c55e;
       animation: dotBlink 1.4s infinite;
     }
+    .live-clock-pill {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      font-size: 1rem;
+      padding: 10px 16px;
+      background: #ffffff;
+      border: 2px solid var(--color-coal);
+      border-radius: 100px;
+      box-shadow: 3px 3px 0px var(--color-coal);
+      color: var(--color-coal);
+    }
     .btn-neo {
-      padding: 12px 18px;
+      padding: 11px 18px;
       border: 2px solid var(--color-coal);
       border-radius: 100px;
       background: var(--color-surface);
       color: var(--color-coal);
       font-weight: 800;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -323,25 +648,41 @@
     .btn-neo.active-sound { background: var(--color-coal); color: var(--color-surface); }
     .monitor-summary-strip {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
-      margin-bottom: 26px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) {
+      .monitor-summary-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
     .monitor-stat-pill {
       background: var(--color-surface);
-      border: 2px solid var(--color-coal);
+      border: 2.5px solid var(--color-coal);
       border-radius: 20px;
-      padding: 18px 20px;
+      padding: 18px 22px;
       box-shadow: 4px 4px 0px var(--color-coal);
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
+    /* Grid Widescreen de 2 columnas para Computadora en la Pantalla en Vivo */
+    .monitor-desktop-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 1100px) {
+      .monitor-desktop-layout {
+        grid-template-columns: 1fr;
+      }
+    }
     .monitor-requests-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
       gap: 20px;
-      margin-bottom: 32px;
     }
     .monitor-request-card {
       background: #ffffff;
@@ -372,7 +713,7 @@
     }
     .alert-headline {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 1.5rem;
+      font-size: 1.48rem;
       font-weight: 900;
       color: var(--color-coal);
       line-height: 1.25;
@@ -390,7 +731,7 @@
       color: var(--color-surface);
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-weight: 900;
-      font-size: 1.02rem;
+      font-size: 1rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -404,9 +745,8 @@
       background: var(--color-surface);
       border: 3px dashed var(--color-coal);
       border-radius: 26px;
-      padding: 46px 24px;
+      padding: 56px 24px;
       text-align: center;
-      margin-bottom: 32px;
     }
     .tables-overview-card {
       background: var(--color-surface);
@@ -417,13 +757,13 @@
     }
     .tables-overview-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 10px;
       margin-top: 16px;
     }
     .table-status-tile {
-      padding: 14px 10px;
-      border-radius: 16px;
+      padding: 13px 8px;
+      border-radius: 14px;
       border: 2px solid var(--color-coal);
       background: #ffffff;
       text-align: center;
@@ -439,22 +779,22 @@
     /* Modal de confirmación in-page */
     .confirm-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(15, 52, 115, 0.45); backdrop-filter: blur(4px);
+      background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(5px);
       z-index: 9500; display: none; align-items: center; justify-content: center; padding: 20px;
     }
     .confirm-overlay.active { display: flex; }
     .confirm-card {
-      background: var(--white); border-radius: 16px; padding: 28px;
-      max-width: 420px; width: 100%; box-shadow: var(--shadow-md); text-align: center;
+      background: var(--surface-card); border-radius: 22px; padding: 28px;
+      max-width: 420px; width: 100%; box-shadow: var(--shadow-neo); border: 2px solid var(--border-strong); text-align: center;
     }
 
     /* Toast Notification */
     #toast { 
-      position: fixed; top: 20px; left: 50%; transform: translate(-50%, -120px); 
-      background: var(--primary); color: white; padding: 14px 28px; 
-      border-radius: 30px; font-weight: 700; z-index: 9999; box-shadow: var(--shadow-md);
-      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      display: flex; align-items: center; gap: 10px; max-width: 92vw; text-align: center;
+      position: fixed; top: 20px; left: 50%; transform: translate(-50%, -130px); 
+      background: var(--border-strong); color: white; padding: 14px 26px; 
+      border-radius: 100px; font-weight: 800; z-index: 9999; box-shadow: var(--shadow-md);
+      transition: transform 0.4s var(--spring);
+      display: flex; align-items: center; gap: 10px; max-width: 92vw; text-align: center; font-size: 0.92rem;
     }
     #toast.show { transform: translate(-50%, 0); }
     
@@ -468,8 +808,8 @@
   <!-- Modal de Confirmación Seguro -->
   <div class="confirm-overlay" id="confirm-overlay">
     <div class="confirm-card">
-      <h3 id="confirm-title" style="margin-bottom: 10px;">Confirmar acción</h3>
-      <p id="confirm-desc" style="color: var(--text-muted); margin-bottom: 22px; font-size: 0.95rem;"></p>
+      <h3 id="confirm-title" style="margin-bottom: 10px; justify-content: center;">Confirmar acción</h3>
+      <p id="confirm-desc" style="color: var(--text-muted); margin-bottom: 22px; font-size: 0.94rem; line-height: 1.5;"></p>
       <div style="display: flex; gap: 12px; justify-content: center;">
         <button type="button" class="btn btn-outline btn-sm" onclick="window.closeConfirmModal()">Cancelar</button>
         <button type="button" class="btn btn-danger btn-sm" id="confirm-accept-btn">Confirmar</button>
@@ -479,29 +819,43 @@
 
   <div class="container" id="main-container">
     
-    <!-- ================= SECCIÓN 1: PANEL DE ADMINISTRACIÓN (EXCLUSIVO DUEÑO DE LA PLATAFORMA) ================= -->
+    <!-- ================= SECCIÓN 1: PANEL DE ADMINISTRACIÓN (DISEÑO UX/UI ADAPTABLE A PC Y CELULAR) ================= -->
     <div id="admin-main-section">
       
-      <!-- Dominio Base -->
-      <div class="card">
-        <div class="card-header">
-          <h2><i class="fa-solid fa-link"></i> Configuración de Dominio para QRs de Mesas y Pantalla en Vivo</h2>
+      <!-- Topbar Moderna -->
+      <header class="admin-topbar">
+        <div class="brand-block">
+          <div class="brand-icon"><i class="fa-solid fa-layer-group"></i></div>
+          <div>
+            <div class="brand-title">Proof Admin Studio</div>
+            <div class="brand-sub">Gestión de restaurantes, QRs de mesas y pantallas en vivo</div>
+          </div>
         </div>
-        <div class="form-group full" style="margin: 0;">
-          <label>Dominio Público (Ej: https://proofofi.netlify.app)</label>
+        <div class="topbar-kpis">
+          <span class="kpi-badge"><i class="fa-solid fa-store"></i> Locales: <strong id="kpi-total-biz">0</strong></span>
+          <span class="kpi-badge"><i class="fa-solid fa-chair"></i> Mesas totales: <strong id="kpi-total-tables">0</strong></span>
+        </div>
+      </header>
+
+      <!-- Barra Compacta de Dominio Público -->
+      <div class="domain-strip">
+        <div class="domain-strip-label">
+          <i class="fa-solid fa-globe"></i>
+          <span>Dominio Público para QRs y Pantallas:</span>
+        </div>
+        <div class="domain-input-wrap">
           <input type="text" id="app-domain" value="https://proofofi.netlify.app" oninput="window.renderAdminList()">
-          <div class="file-name" style="text-align: left;"><i class="fa-solid fa-circle-info"></i> Usado para generar exclusivamente los códigos QR de cada mesa y el link único de la pantalla en vivo del restaurante.</div>
         </div>
       </div>
 
       <!-- Banner de Link + Login recién generado al crear un restaurante -->
-      <div id="last-created-banner" class="card hidden" style="border: 2px solid #2a9d8f; background: #f0fbf9;">
+      <div id="last-created-banner" class="card hidden" style="border-color: var(--accent-teal); background: #f0fdfa;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-          <h3 style="color: #21867a; margin: 0;"><i class="fa-solid fa-circle-check"></i> ¡Restaurante Creado! Link de Pantalla en Vivo y Login Listos</h3>
+          <h3 style="color: var(--accent-teal-hover); margin: 0;"><i class="fa-solid fa-circle-check"></i> ¡Restaurante Creado! Link de Pantalla en Vivo y Login Listos</h3>
           <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('last-created-banner').classList.add('hidden')">Cerrar</button>
         </div>
-        <p style="font-size: 0.92rem; color: var(--text-main); margin-bottom: 10px;">
-          Pásale este link y estas credenciales a la dueña de <strong id="last-created-name"></strong>. Cuando entre al link, <strong>deberá iniciar sesión con su usuario y clave</strong> para ver la pantalla en vivo (el panel de admin jamás se muestra):
+        <p style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 10px;">
+          Envíale este link y estas credenciales a la dueña de <strong id="last-created-name"></strong>. Cuando entre al link, deberá iniciar sesión con su usuario y clave para ver la pantalla en vivo:
         </p>
         <div class="screen-url-code" id="last-created-url" style="margin-bottom: 10px;"></div>
         <div class="creds-pill-row" style="margin-bottom: 12px;">
@@ -515,127 +869,165 @@
         </div>
       </div>
 
-      <!-- Formulario Nuevo Local -->
-      <div class="card">
-        <div class="card-header">
-          <h2><i class="fa-solid fa-store"></i> Crear Nuevo Local</h2>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group" style="flex: 2;">
-            <label>Nombre del Restaurante / Bar</label>
-            <input type="text" id="name" placeholder="Ej: Proof Café Central">
-          </div>
-          <div class="form-group">
-            <label>Categoría</label>
-            <select id="cat">
-              <option value="Gastronomía">Gastronomía</option>
-              <option value="Bar / Cervecería">Bar / Cervecería</option>
-              <option value="Cafetería">Cafetería</option>
-            </select>
-          </div>
-        </div>
+      <!-- Layout en 2 Columnas en PC / 1 Columna en Celular -->
+      <div class="admin-workspace-grid">
 
-        <div class="form-group full">
-          <label>Descripción Corta</label>
-          <textarea id="desc" rows="2" placeholder="Especialistas en café de especialidad..."></textarea>
-        </div>
-
-        <!-- SECCIÓN: GOOGLE MAPS, MESAS Y LOGIN DE PANTALLA EN VIVO -->
-        <div style="background: #eef4fb; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(15, 52, 115, 0.2);">
-          <h3><i class="fa-solid fa-qrcode"></i> Google Maps y Cantidad de Mesas (QRs por Mesa)</h3>
-          <div class="form-row">
-            <div class="form-group" style="flex: 2;">
-              <label><i class="fa-brands fa-google"></i> URL de Google Maps del Restaurante</label>
-              <input type="text" id="googleMapsUrl" placeholder="Ej: https://maps.app.goo.gl/... o enlace de reseñas de Google Maps">
-              <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Al terminar de calificar, el cliente será dirigido automáticamente a esta dirección con su reseña copiada.</span>
-            </div>
-            <div class="form-group" style="flex: 1; min-width: 180px;">
-              <label><i class="fa-solid fa-chair"></i> Cantidad de Mesas</label>
-              <input type="number" id="tableCount" min="1" max="200" value="10" placeholder="Ej: 10">
-              <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Se generará el QR individual de cada mesa (Mesa 1 a N).</span>
-            </div>
-          </div>
-
-          <div style="border-top: 1px dashed var(--border-color); padding-top: 16px; margin-top: 6px;">
-            <h3 style="margin-bottom: 8px;"><i class="fa-solid fa-user-lock"></i> Crear Login para la Pantalla en Vivo (Dueña / Encargado del Local)</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-              Cuando la dueña del local abra el link de la pantalla en vivo, deberá ingresar este usuario y contraseña para ver los pedidos de las mesas:
-            </p>
-            <div class="form-row" style="margin-bottom: 0;">
-              <div class="form-group" style="margin-bottom: 0;">
-                <label>Usuario de la Dueña / Local</label>
-                <input type="text" id="newOwnerUser" placeholder="Ej: cafe_central">
-              </div>
-              <div class="form-group" style="margin-bottom: 0;">
-                <label>Contraseña de la Pantalla en Vivo</label>
-                <input type="text" id="newOwnerPass" placeholder="Ej: clave1234">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group full">
-          <label>Fotos y Videos del Local (El primero será la portada)</label>
-          <label class="custom-file-upload">
-            <i class="fa-solid fa-cloud-arrow-up"></i> Seleccionar Imágenes o Videos cortos
-            <input type="file" id="photos" accept="image/*,video/mp4,video/quicktime" multiple onchange="window.previewAdminPhotos(event)">
-          </label>
-          <div id="photo-preview-container"></div>
-        </div>
-
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
-          <h3><i class="fa-solid fa-clock"></i> Horarios</h3>
-          <div class="form-row" style="margin-bottom: 0;">
-            <div class="form-group"><label>Apertura</label><input type="time" id="openTime" value="08:00"></div>
-            <div class="form-group"><label>Cierre</label><input type="time" id="closeTime" value="23:00"></div>
-            <div class="form-group" style="flex: 2;"><label>Texto Visible</label><input type="text" id="hoursDesc" placeholder="Lun a Dom de 08:00 a 23:00"></div>
-          </div>
-        </div>
-
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
-          <h3><i class="fa-solid fa-hashtag"></i> Redes y Menú</h3>
-          <div class="form-row">
-            <div class="form-group"><label><i class="fa-brands fa-whatsapp"></i> WhatsApp</label><input type="text" id="whatsapp" placeholder="Ej: 549223..."></div>
-            <div class="form-group"><label><i class="fa-brands fa-instagram"></i> Instagram</label><input type="text" id="instagram" placeholder="https://ig..."></div>
-            <div class="form-group"><label><i class="fa-brands fa-facebook"></i> Facebook</label><input type="text" id="facebook" placeholder="https://fb..."></div>
+        <!-- COLUMNA IZQUIERDA: REGISTRO RÁPIDO E INTERACTIVO DE NUEVO LOCAL -->
+        <div class="card">
+          <div class="card-header">
+            <h2><i class="fa-solid fa-plus-circle" style="color: var(--primary);"></i> Registrar Nuevo Local</h2>
+            <span style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); background: var(--surface-muted); padding: 5px 12px; border-radius: 100px; border: 1px solid var(--border-color);">4 Pasos Rápidos</span>
           </div>
           
-          <div class="form-group full" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
-            <label><i class="fa-solid fa-file-pdf"></i> Menú Digital (Sube un PDF o usa un Link)</label>
-            <input type="text" id="menu" placeholder="Link externo (Opcional si no subes archivo)" style="margin-bottom: 10px;">
-            <label class="custom-file-upload" style="padding: 12px; font-size: 0.9rem; background: var(--white);">
-              <i class="fa-solid fa-file-arrow-up"></i> Seleccionar Menú en PDF
-              <input type="file" id="menuFile" accept="application/pdf" onchange="document.getElementById('menuFileName').innerText = this.files[0] ? ('Archivo: ' + this.files[0].name) : ''">
-            </label>
-            <div id="menuFileName" class="file-name" style="color: var(--primary);"></div>
+          <!-- PASO 1: IDENTIDAD Y MULTIMEDIA -->
+          <div class="form-step-box">
+            <div class="step-header">
+              <div class="step-title"><span class="step-badge">1</span> Identidad, Video y Fotos</div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="flex: 2;">
+                <label>Nombre del Café / Restaurante</label>
+                <input type="text" id="name" placeholder="Ej: Proof Café Central" oninput="window.suggestOwnerUserFromName()">
+              </div>
+              <div class="form-group" style="flex: 1; min-width: 150px;">
+                <label>Categoría</label>
+                <select id="cat">
+                  <option value="Cafetería">Cafetería</option>
+                  <option value="Gastronomía">Gastronomía</option>
+                  <option value="Bar / Cervecería">Bar / Cervecería</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label>Descripción del Local (Aparece debajo de las fotos)</label>
+              <textarea id="desc" rows="2" placeholder="Especialistas en café de especialidad y pastelería artesanal..."></textarea>
+            </div>
+
+            <div class="form-group full" style="margin-bottom: 0;">
+              <label>Video en Loop y Fotos (El video se mostrará primero automáticamente)</label>
+              <label class="custom-file-upload">
+                <i class="fa-solid fa-photo-film"></i> Subir Video corto y Fotos del Local
+                <input type="file" id="photos" accept="image/*,video/mp4,video/quicktime" multiple onchange="window.previewAdminPhotos(event)">
+              </label>
+              <div id="photo-preview-container"></div>
+            </div>
+          </div>
+
+          <!-- PASO 2: MESAS, GOOGLE MAPS Y LOGIN DE LA DUEÑA -->
+          <div class="form-step-box">
+            <div class="step-header">
+              <div class="step-title"><span class="step-badge">2</span> Mesas (QRs), Google Maps y Login de Pantalla</div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="flex: 1.5;">
+                <label><i class="fa-brands fa-google"></i> URL de Google Maps del Local</label>
+                <input type="text" id="googleMapsUrl" placeholder="https://maps.app.goo.gl/...">
+              </div>
+              <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label><i class="fa-solid fa-chair"></i> Cantidad de Mesas</label>
+                <div class="stepper-control">
+                  <button type="button" class="btn-stepper" onclick="window.adjustTableCount(-1)">-</button>
+                  <input type="number" id="tableCount" min="1" max="200" value="10" style="text-align: center; font-weight: 900;">
+                  <button type="button" class="btn-stepper" onclick="window.adjustTableCount(1)">+</button>
+                </div>
+                <div class="preset-pills">
+                  <button type="button" class="preset-pill" onclick="document.getElementById('tableCount').value=6">6 mesas</button>
+                  <button type="button" class="preset-pill" onclick="document.getElementById('tableCount').value=10">10 mesas</button>
+                  <button type="button" class="preset-pill" onclick="document.getElementById('tableCount').value=15">15 mesas</button>
+                  <button type="button" class="preset-pill" onclick="document.getElementById('tableCount').value=25">25 mesas</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-top: 1.5px dashed var(--border-color); padding-top: 14px; margin-top: 4px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                <span style="font-size: 0.82rem; font-weight: 800; color: var(--primary); text-transform: uppercase;">
+                  <i class="fa-solid fa-user-lock"></i> Login para la Dueña (Pantalla en Vivo)
+                </span>
+                <button type="button" class="preset-pill" onclick="window.autoGenerateOwnerCreds()" style="color: var(--primary); border-color: var(--primary);">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Generar Clave Automática
+                </button>
+              </div>
+              <div class="form-row" style="margin-bottom: 0;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Usuario del Local</label>
+                  <input type="text" id="newOwnerUser" placeholder="Ej: cafe_central">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Contraseña</label>
+                  <input type="text" id="newOwnerPass" placeholder="Ej: clave1234">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PASO 3: HORARIOS, REDES Y MENÚ DIGITAL -->
+          <div class="form-step-box">
+            <div class="step-header">
+              <div class="step-title"><span class="step-badge">3</span> Horarios, Redes y Menú Digital</div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group"><label>Apertura</label><input type="time" id="openTime" value="08:00"></div>
+              <div class="form-group"><label>Cierre</label><input type="time" id="closeTime" value="23:00"></div>
+              <div class="form-group" style="flex: 1.6;"><label>Texto de Horario</label><input type="text" id="hoursDesc" placeholder="Lun a Dom de 08:00 a 23:00"></div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group"><label><i class="fa-brands fa-whatsapp"></i> WhatsApp</label><input type="text" id="whatsapp" placeholder="549223..."></div>
+              <div class="form-group"><label><i class="fa-brands fa-instagram"></i> Instagram</label><input type="text" id="instagram" placeholder="https://instagram.com/..."></div>
+              <div class="form-group"><label><i class="fa-brands fa-facebook"></i> Facebook</label><input type="text" id="facebook" placeholder="https://facebook.com/..."></div>
+            </div>
+            
+            <div class="form-group full" style="margin-bottom: 0;">
+              <label><i class="fa-solid fa-file-pdf"></i> Menú Digital (Link o Archivo PDF)</label>
+              <div class="form-row" style="align-items: center; margin-bottom: 0;">
+                <div style="flex: 1.4; min-width: 180px;">
+                  <input type="text" id="menu" placeholder="Link externo al menú (opcional)">
+                </div>
+                <div style="flex: 1; min-width: 180px;">
+                  <label class="custom-file-upload" style="padding: 11px 14px; font-size: 0.84rem;">
+                    <i class="fa-solid fa-file-arrow-up"></i> Subir PDF
+                    <input type="file" id="menuFile" accept="application/pdf" onchange="document.getElementById('menuFileName').innerText = this.files[0] ? ('PDF: ' + this.files[0].name) : ''">
+                  </label>
+                </div>
+              </div>
+              <div id="menuFileName" class="file-name" style="color: var(--primary);"></div>
+            </div>
+          </div>
+
+          <!-- PASO 4: UBICACIÓN EN MAPA -->
+          <div class="form-step-box">
+            <div class="step-header">
+              <div class="step-title"><span class="step-badge">4</span> Ubicación del Local</div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+              <input type="text" id="address" placeholder="Ej: Güemes 3000, Mar del Plata" style="flex: 1; min-width: 180px;">
+              <button type="button" onclick="window.searchAddress()" class="btn btn-outline btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+              <button type="button" onclick="window.useAdminGPS()" class="btn btn-outline btn-sm" title="Usar mi GPS"><i class="fa-solid fa-location-crosshairs"></i> GPS</button>
+            </div>
+            <div id="admin-map"></div>
+            <input type="hidden" id="lat" value="-38.0055"><input type="hidden" id="lng" value="-57.5426">
+          </div>
+
+          <button type="button" onclick="window.saveBusiness()" class="btn" style="width: 100%; font-size: 1.05rem; padding: 17px;" id="btn-save">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Local y Generar QRs de Mesas + Pantalla en Vivo
+          </button>
+        </div>
+
+        <!-- COLUMNA DERECHA: LOCALES REGISTRADOS -->
+        <div class="card">
+          <div class="card-header">
+            <h2><i class="fa-solid fa-store" style="color: var(--primary);"></i> Locales Registrados</h2>
+          </div>
+          <div id="biz-list">
+            <p style="color: var(--text-muted); text-align: center; padding: 20px;">Cargando restaurantes...</p>
           </div>
         </div>
 
-        <div class="form-group full">
-          <label>Ubicación (Busca la calle, haz clic en el mapa o usa tu GPS)</label>
-          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="text" id="address" placeholder="Ej: Güemes 3000, Mar del Plata">
-            <button type="button" onclick="window.searchAddress()" class="btn btn-outline" style="white-space: nowrap;"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
-            <button type="button" onclick="window.useAdminGPS()" class="btn btn-outline" style="white-space: nowrap;" title="Usar ubicación actual"><i class="fa-solid fa-location-crosshairs"></i> GPS</button>
-          </div>
-          <div id="admin-map"></div>
-          <input type="hidden" id="lat" value="-38.0055"><input type="hidden" id="lng" value="-57.5426">
-        </div>
-
-        <button type="button" onclick="window.saveBusiness()" class="btn" style="width: 100%; font-size: 1.1rem; padding: 18px;" id="btn-save">
-          <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Restaurante y Generar QRs de Mesas + Link de Pantalla en Vivo
-        </button>
-      </div>
-
-      <!-- Lista de Locales -->
-      <div class="card">
-        <div class="card-header">
-          <h2><i class="fa-solid fa-list-check"></i> Locales Registrados</h2>
-        </div>
-        <div id="biz-list">
-          <p style="color: var(--text-muted); text-align: center; padding: 20px;">Cargando restaurantes...</p>
-        </div>
       </div>
     </div>
 
@@ -643,7 +1035,7 @@
     <div id="admin-manage-section" class="hidden">
       
       <button type="button" onclick="window.hideAdminManageSection()" class="btn btn-outline" style="margin-bottom: 20px;">
-        <i class="fa-solid fa-arrow-left"></i> Volver a la Lista de Locales
+        <i class="fa-solid fa-arrow-left"></i> Volver al Panel Principal
       </button>
       
       <div class="card">
@@ -652,14 +1044,14 @@
         </div>
 
         <!-- 1. Link de Pantalla en Vivo y Login de la Dueña -->
-        <div style="background: #eef4fb; padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 2px solid rgba(15, 52, 115, 0.25);">
+        <div class="form-step-box" style="background: #f0f7ff; border-color: rgba(15, 52, 115, 0.25);">
           <h3><i class="fa-solid fa-tv"></i> Link de Pantalla en Vivo y Login para la Dueña del Local</h3>
-          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 14px;">
-            Cuando la dueña abra este link, se le pedirá el usuario y la contraseña configurados aquí abajo para ver las solicitudes de las mesas en vivo (el panel de administración nunca es accesible desde ese link):
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
+            Cuando la dueña abra este link en su computadora o tablet, se le pedirá este usuario y contraseña para ver las solicitudes de las mesas en vivo (el panel de administración nunca es accesible):
           </p>
 
-          <div class="screen-url-banner" style="background: var(--white); margin-bottom: 16px;">
-            <span style="font-size: 0.8rem; font-weight: 800; color: var(--primary); text-transform: uppercase;">Link Único de la Pantalla en Vivo:</span>
+          <div class="screen-url-banner" style="background: #ffffff; margin-bottom: 14px;">
+            <span style="font-size: 0.76rem; font-weight: 800; color: var(--primary); text-transform: uppercase;">Link Único de la Pantalla en Vivo:</span>
             <div class="screen-url-code" id="manage-screen-url-display"></div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
               <button type="button" class="btn btn-success btn-sm" onclick="window.copyActiveBizScreenUrl()">
@@ -682,12 +1074,12 @@
             </div>
           </div>
           <button type="button" onclick="window.generateOwnerCredentials()" class="btn btn-sm">
-            <i class="fa-solid fa-lock"></i> Guardar Login de la Dueña para la Pantalla en Vivo
+            <i class="fa-solid fa-lock"></i> Guardar Login de la Dueña
           </button>
         </div>
 
         <!-- 2. Configuración de Google Maps, Cantidad de Mesas y QRs de cada Mesa -->
-        <div style="background: #f8f9fa; padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border-color);">
+        <div class="form-step-box">
           <h3><i class="fa-solid fa-qrcode"></i> Mesas del Restaurante (QRs Individuales) y Google Maps</h3>
           <div class="form-row" style="margin-bottom: 8px;">
             <div class="form-group" style="flex: 2; margin-bottom: 0;">
@@ -707,9 +1099,9 @@
         </div>
 
         <!-- 3. Gestión de Staff -->
-        <div style="background: #f8f9fa; padding: 24px; border-radius: 12px; border: 1px solid var(--border-color);">
+        <div class="form-step-box" style="margin-bottom: 0;">
           <h3><i class="fa-solid fa-user-tie"></i> Equipo / Personal del Restaurante</h3>
-          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">Agrega al personal de este restaurante para que los clientes puedan evaluarlos al escanear el QR de su mesa.</p>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">Agrega al personal de este restaurante para que los clientes puedan evaluarlos al escanear el QR de su mesa.</p>
           
           <div class="form-row">
             <div class="form-group" style="flex: 2;">
@@ -730,8 +1122,8 @@
           </div>
           
           <div class="form-group full">
-            <label>Foto de Perfil (Opcional pero recomendada)</label>
-            <label class="custom-file-upload" style="background: var(--white);">
+            <label>Foto de Perfil (Opcional)</label>
+            <label class="custom-file-upload" style="background: #ffffff;">
               <i class="fa-solid fa-camera"></i> Subir Foto del Empleado
               <input type="file" id="adm-staff-photo-file" accept="image/*" onchange="document.getElementById('staffFileName').innerText = this.files[0] ? ('Foto lista: ' + this.files[0].name) : ''">
             </label>
@@ -742,7 +1134,7 @@
             <i class="fa-solid fa-user-plus"></i> Agregar al Equipo
           </button>
           
-          <div id="admin-staff-list" style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;"></div>
+          <div id="admin-staff-list" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;"></div>
         </div>
 
       </div>
@@ -773,18 +1165,19 @@
       </div>
     </div>
 
-    <!-- ================= SECCIÓN 4: PANTALLA EN VIVO AISLADA (SOLO VISIBLE TRAS INICIAR SESIÓN CON EL LOGIN DEL LOCAL) ================= -->
+    <!-- ================= SECCIÓN 4: PANTALLA EN VIVO WIDESCREEN ADAPTADA A COMPUTADORA ================= -->
     <div id="admin-monitor-section" class="hidden">
       <header class="monitor-topbar">
         <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
           <span class="live-badge"><span class="live-dot"></span> EN VIVO</span>
           <div>
-            <h1 id="monitor-biz-name" style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.8rem; font-weight: 900; color: var(--color-coal); line-height: 1.1;">Restaurante</h1>
-            <div id="monitor-biz-meta" style="font-size: 0.9rem; font-weight: 700; color: rgba(34,34,34,0.7); margin-top: 2px;">Pantalla exclusiva de pedidos y llamados de mesas en vivo</div>
+            <h1 id="monitor-biz-name" style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.85rem; font-weight: 900; color: var(--color-coal); line-height: 1.1;">Restaurante</h1>
+            <div id="monitor-biz-meta" style="font-size: 0.9rem; font-weight: 700; color: rgba(34,34,34,0.7); margin-top: 2px;">Centro de comando de pedidos y llamados de mesas en tiempo real</div>
           </div>
         </div>
 
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <span class="live-clock-pill" id="monitor-clock-display">--:--:--</span>
           <button type="button" class="btn-neo active-sound" id="btn-sound-toggle" onclick="window.toggleMonitorSound()">
             <i class="fa-solid fa-volume-high" id="sound-icon"></i>
             <span id="sound-label">Sonido Activado</span>
@@ -801,46 +1194,47 @@
       <div class="monitor-summary-strip">
         <div class="monitor-stat-pill">
           <div>
-            <div style="font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Solicitudes Activas</div>
-            <div id="mon-count-total" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-coal);">0</div>
+            <div style="font-weight: 800; font-size: 0.82rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Solicitudes Activas</div>
+            <div id="mon-count-total" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2.1rem; color: var(--color-coal);">0</div>
           </div>
           <i class="fa-solid fa-bell" style="font-size: 2rem; color: var(--color-coal);"></i>
         </div>
         <div class="monitor-stat-pill">
           <div>
-            <div style="font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Llamando al Mozo</div>
-            <div id="mon-count-waiter" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-coal);">0</div>
+            <div style="font-weight: 800; font-size: 0.82rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Llamando al Mozo</div>
+            <div id="mon-count-waiter" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2.1rem; color: var(--color-coal);">0</div>
           </div>
           <i class="fa-solid fa-hand-sparkles" style="font-size: 2rem; color: var(--color-waiter);"></i>
         </div>
         <div class="monitor-stat-pill">
           <div>
-            <div style="font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Pidiendo el Menú</div>
-            <div id="mon-count-menu" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-coal);">0</div>
+            <div style="font-weight: 800; font-size: 0.82rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Pidiendo el Menú</div>
+            <div id="mon-count-menu" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2.1rem; color: var(--color-coal);">0</div>
           </div>
           <i class="fa-solid fa-book-open" style="font-size: 2rem; color: var(--color-menu);"></i>
         </div>
         <div class="monitor-stat-pill">
           <div>
-            <div style="font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Pidiendo la Cuenta</div>
-            <div id="mon-count-bill" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-coal);">0</div>
+            <div style="font-weight: 800; font-size: 0.82rem; text-transform: uppercase; color: rgba(34,34,34,0.7);">Pidiendo la Cuenta</div>
+            <div id="mon-count-bill" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2.1rem; color: var(--color-coal);">0</div>
           </div>
           <i class="fa-solid fa-receipt" style="font-size: 2rem; color: var(--color-bill);"></i>
         </div>
       </div>
 
-      <!-- Tarjetas de Alertas de Mesas -->
-      <div id="monitor-requests-container"></div>
+      <!-- Layout de 2 Columnas en Computadora: Alertas a la izquierda + Mapa de Mesas a la derecha -->
+      <div class="monitor-desktop-layout">
+        <div id="monitor-requests-container"></div>
 
-      <!-- Mapa General de Mesas del Local -->
-      <div class="tables-overview-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.25rem; font-weight: 900; color: var(--color-coal); margin: 0;">
-            <i class="fa-solid fa-table-cells-large"></i> Estado de las Mesas del Restaurante
-          </h3>
-          <span id="monitor-tables-range" style="font-size: 0.88rem; font-weight: 800; color: rgba(34,34,34,0.7);"></span>
-        </div>
-        <div class="tables-overview-grid" id="monitor-tables-grid"></div>
+        <aside class="tables-overview-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.18rem; font-weight: 900; color: var(--color-coal); margin: 0;">
+              <i class="fa-solid fa-table-cells-large"></i> Mapa de Mesas
+            </h3>
+            <span id="monitor-tables-range" style="font-size: 0.82rem; font-weight: 800; color: rgba(34,34,34,0.7);"></span>
+          </div>
+          <div class="tables-overview-grid" id="monitor-tables-grid"></div>
+        </aside>
       </div>
     </div>
 
@@ -940,13 +1334,52 @@
       }
     }
 
+    // Helpers interactivos del formulario
+    window.adjustTableCount = function(delta) {
+      const el = document.getElementById('tableCount');
+      if (!el) return;
+      const cur = parseInt(el.value, 10) || 10;
+      el.value = Math.max(1, Math.min(200, cur + delta));
+    };
+
+    window.suggestOwnerUserFromName = function() {
+      const nameEl = document.getElementById('name');
+      const userEl = document.getElementById('newOwnerUser');
+      const passEl = document.getElementById('newOwnerPass');
+      if (!nameEl || !userEl) return;
+      const clean = nameEl.value.trim().toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+      if (clean && !userEl.dataset.manualEdited) {
+        userEl.value = clean;
+      }
+      if (passEl && !passEl.value) {
+        passEl.value = "1234";
+      }
+    };
+
+    window.autoGenerateOwnerCreds = function() {
+      const nameVal = (document.getElementById('name').value || 'local').trim().toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'local';
+      const randNum = Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('newOwnerUser').value = nameVal;
+      document.getElementById('newOwnerPass').value = `proof${randNum}`;
+      window.showToast("Usuario y clave generados");
+    };
+
     window.addEventListener('DOMContentLoaded', () => {
-      // Si se entra desde el link de la pantalla en vivo, eliminar el panel de admin y mostrar el Login de la dueña
+      const userInp = document.getElementById('newOwnerUser');
+      if (userInp) {
+        userInp.addEventListener('input', () => { userInp.dataset.manualEdited = 'true'; });
+      }
+
       if (initialMonitorBizId) {
         window.openMonitorForBiz(initialMonitorBizId);
       } else {
         initLeafletMap();
       }
+
+      setInterval(() => {
+        const cl = document.getElementById('monitor-clock-display');
+        if (cl) cl.innerText = new Date().toLocaleTimeString('es-AR', { hour12: false });
+      }, 1000);
 
       const acceptBtn = document.getElementById('confirm-accept-btn');
       if (acceptBtn) {
@@ -1086,7 +1519,6 @@
       return baseUrl;
     }
 
-    // Construye el Link Único de Pantalla en Vivo para la dueña del local
     function buildMonitorUrlForBiz(bizId) {
       const baseUrl = getCleanBaseUrl();
       return `${baseUrl}/?pantalla=${encodeURIComponent(bizId)}`;
@@ -1167,31 +1599,36 @@
     }
 
     /* =======================================================
-       UBICACIÓN Y MAPA
+       UBICACIÓN Y VISTA PREVIA MULTIMEDIA
        ======================================================= */
     window.previewAdminPhotos = function(event) {
       const container = document.getElementById('photo-preview-container');
       container.innerHTML = ""; 
-      const files = event.target.files;
-      for(let i=0; i<files.length; i++) {
-        const file = files[i];
+      const files = Array.from(event.target.files || []);
+      // Ordenar vista previa mostrando videos primero, igual que en el cliente
+      const sortedFiles = [
+        ...files.filter(f => f.type.startsWith('video/')),
+        ...files.filter(f => !f.type.startsWith('video/'))
+      ];
+
+      sortedFiles.forEach((file, idx) => {
         const reader = new FileReader();
         reader.onload = e => {
+          const box = document.createElement('div');
+          box.className = 'preview-thumb-box';
           if (file.type.startsWith('video/')) {
-            const vid = document.createElement('video');
-            vid.src = e.target.result;
-            vid.autoplay = true;
-            vid.loop = true;
-            vid.muted = true;
-            container.appendChild(vid);
+            box.innerHTML = `
+              <video src="${e.target.result}" autoplay loop muted playsinline></video>
+              <span class="preview-thumb-tag">Video Loop</span>`;
           } else {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            container.appendChild(img);
+            box.innerHTML = `
+              <img src="${e.target.result}" alt="Foto ${idx+1}">
+              <span class="preview-thumb-tag">Foto ${idx+1}</span>`;
           }
+          container.appendChild(box);
         };
         reader.readAsDataURL(file);
-      }
+      });
     };
 
     window.searchAddress = async function() {
@@ -1235,7 +1672,7 @@
     window.saveBusiness = async function() {
       const name = document.getElementById('name').value.trim(); 
       const desc = document.getElementById('desc').value.trim();
-      const cat = document.getElementById('cat').value || "Gastronomía"; 
+      const cat = document.getElementById('cat').value || "Cafetería"; 
       const hoursDesc = document.getElementById('hoursDesc').value.trim();
       const openTime = document.getElementById('openTime').value || "08:00";
       const closeTime = document.getElementById('closeTime').value || "23:00";
@@ -1245,7 +1682,6 @@
       const tableCountRaw = parseInt(document.getElementById('tableCount').value, 10);
       const tableCount = (!isNaN(tableCountRaw) && tableCountRaw > 0) ? tableCountRaw : 10;
 
-      // Usuario y Contraseña para la dueña del local
       const rawOwnerUser = document.getElementById('newOwnerUser').value.trim();
       const rawOwnerPass = document.getElementById('newOwnerPass').value.trim();
       const cleanDefaultUser = name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'local';
@@ -1266,7 +1702,7 @@
         lng = -57.5426;
       }
 
-      const photoFiles = document.getElementById('photos').files;
+      const photoFiles = Array.from(document.getElementById('photos').files || []);
 
       if (!name) {
         document.getElementById('name').focus();
@@ -1278,9 +1714,15 @@
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando restaurante...`;
 
       try {
+        // Guardar videos primero y luego fotos para que en el cliente el video siempre salga primero en loop
+        const orderedFiles = [
+          ...photoFiles.filter(f => f.type.startsWith('video/')),
+          ...photoFiles.filter(f => !f.type.startsWith('video/'))
+        ];
+
         let photosArray = [];
-        for(let i = 0; i < photoFiles.length; i++) {
-          const file = photoFiles[i];
+        for(let i = 0; i < orderedFiles.length; i++) {
+          const file = orderedFiles[i];
           let b64 = null;
           if (file.type.startsWith('video/')) {
             if (file.size <= 7 * 1024 * 1024) {
@@ -1317,7 +1759,7 @@
         const payload = { 
           name: name || "",
           desc: desc || "",
-          category: cat || "Gastronomía",
+          category: cat || "Cafetería",
           hoursDesc: hoursDesc || "",
           openTime: openTime || "08:00",
           closeTime: closeTime || "23:00",
@@ -1357,7 +1799,7 @@
         }
 
         globalBizData[newBizId] = payload;
-        openTablesPanelByBiz[newBizId] = true; // Mostrar automáticamente los QRs de las mesas del nuevo local
+        openTablesPanelByBiz[newBizId] = true;
         saveLocalBackup(globalBizData);
         window.renderAdminList();
 
@@ -1378,7 +1820,9 @@
         document.getElementById('desc').value = "";
         document.getElementById('googleMapsUrl').value = "";
         document.getElementById('tableCount').value = "10";
-        document.getElementById('newOwnerUser').value = "";
+        const uEl = document.getElementById('newOwnerUser');
+        uEl.value = "";
+        delete uEl.dataset.manualEdited;
         document.getElementById('newOwnerPass').value = "";
         document.getElementById('hoursDesc').value = "";
         document.getElementById('whatsapp').value = "";
@@ -1396,7 +1840,7 @@
         window.showToast("Error inesperado: " + (err && err.message ? err.message : "Intenta nuevamente"));
       } finally {
         btn.disabled = false; 
-        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Guardar Restaurante y Generar QRs de Mesas + Link de Pantalla en Vivo`;
+        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Guardar Local y Generar QRs de Mesas + Pantalla en Vivo`;
       }
     };
 
@@ -1426,8 +1870,22 @@
       const baseUrl = getCleanBaseUrl();
       const sortedBiz = Object.entries(globalBizData).sort((a, b) => ((b[1] && b[1].timestamp) || 0) - ((a[1] && a[1].timestamp) || 0));
 
+      // Actualizar KPIs superiores
+      const kpiBiz = document.getElementById('kpi-total-biz');
+      const kpiTables = document.getElementById('kpi-total-tables');
+      if (kpiBiz) kpiBiz.innerText = sortedBiz.length;
+      if (kpiTables) {
+        const sumTables = sortedBiz.reduce((acc, [_, b]) => acc + (parseInt(b && b.tableCount, 10) || 10), 0);
+        kpiTables.innerText = sumTables;
+      }
+
       if (sortedBiz.length === 0) {
-        list.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px;">No hay restaurantes creados aún.</p>`;
+        list.innerHTML = `
+          <div style="text-align:center; color:var(--text-muted); padding:38px 20px; border:2px dashed var(--border-color); border-radius:16px;">
+            <i class="fa-solid fa-store-slash" style="font-size:2.2rem; margin-bottom:10px; opacity:0.6;"></i>
+            <p style="font-weight:700;">Todavía no hay restaurantes registrados.</p>
+            <p style="font-size:0.84rem; margin-top:4px;">Completa el formulario para generar sus QRs de mesas y su link de pantalla en vivo.</p>
+          </div>`;
         return;
       }
 
@@ -1437,6 +1895,9 @@
         const tableCount = parseInt(b.tableCount, 10) || (b.tables ? Object.keys(b.tables).length : 10);
         const ownerUser = (b.credentials && b.credentials.username) ? b.credentials.username : 'Sin usuario';
         const ownerPass = (b.credentials && b.credentials.password) ? b.credentials.password : 'Sin clave';
+
+        const photosArr = b.photos && b.photos.length > 0 ? b.photos : (b.photoBase64 ? [b.photoBase64] : []);
+        const firstImage = photosArr.find(src => src && !src.startsWith('data:video')) || createInitialAvatarBase64(b.name || 'P');
 
         let tablesGridHtml = "";
         if (openTablesPanelByBiz[id] && tableCount > 0) {
@@ -1448,11 +1909,11 @@
               <div class="table-qr-card">
                 <div class="table-qr-title"><i class="fa-solid fa-chair"></i> Mesa ${t}</div>
                 <img src="${tableQrImg}" alt="QR Mesa ${t}">
-                <a href="${tableQrImg}" target="_blank" download="QR_${window.escapeHtml(b.name)}_Mesa_${t}" style="font-size:0.78rem; font-weight:700; color:var(--primary); text-decoration:none;">
-                  <i class="fa-solid fa-download"></i> Descargar QR Mesa ${t}
+                <a href="${tableQrImg}" target="_blank" download="QR_${window.escapeHtml(b.name)}_Mesa_${t}" style="font-size:0.76rem; font-weight:800; color:var(--primary); text-decoration:none;">
+                  <i class="fa-solid fa-download"></i> Descargar QR
                 </a>
                 <button type="button" class="btn btn-outline btn-sm" style="padding:5px 8px; font-size:0.72rem; width:100%;" onclick="window.copyTextToClipboard('${tableQrTarget}', 'Link de Mesa ${t} copiado')">
-                  <i class="fa-solid fa-link"></i> Copiar Link Mesa ${t}
+                  <i class="fa-solid fa-link"></i> Copiar Link
                 </button>
               </div>`;
           }
@@ -1460,30 +1921,31 @@
         }
 
         const gmapsBadge = b.googleMapsUrl
-          ? `<a href="${window.escapeHtml(b.googleMapsUrl)}" target="_blank" style="font-size:0.82rem; font-weight:700; color:#2a9d8f; text-decoration:none; display:inline-flex; align-items:center; gap:4px; margin-left:10px;"><i class="fa-solid fa-map-location-dot"></i> Google Maps configurado</a>`
-          : `<span style="font-size:0.8rem; color:var(--text-muted); margin-left:10px;"><i class="fa-solid fa-circle-exclamation"></i> Sin URL de Maps</span>`;
+          ? `<a href="${window.escapeHtml(b.googleMapsUrl)}" target="_blank" class="badge-role" style="background:#f0fdf4; color:#15803d; border-color:#bbf7d0; text-decoration:none;"><i class="fa-solid fa-map-location-dot"></i> Maps Activo</a>`
+          : `<span class="badge-role" style="background:#f8fafc; color:var(--text-muted); border-color:var(--border-color);"><i class="fa-solid fa-circle-exclamation"></i> Sin Maps</span>`;
 
         list.innerHTML += `
           <div class="list-item">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
-              <div>
-                <div style="display:flex; align-items:center; flex-wrap:wrap; margin-bottom:4px;">
-                  <h3 style="margin-bottom:0;">${window.escapeHtml(b.name)}</h3>
-                  <span class="badge-role"><i class="fa-solid fa-chair"></i> ${tableCount} Mesas (QRs individuales)</span>
-                  ${gmapsBadge}
+            <div class="biz-card-top">
+              <div class="biz-card-identity">
+                <img src="${firstImage}" class="biz-card-avatar" alt="Logo">
+                <div>
+                  <h3 style="margin-bottom:5px; font-size:1.15rem; color:var(--text-main);">${window.escapeHtml(b.name)}</h3>
+                  <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                    <span class="badge-role"><i class="fa-solid fa-tag"></i> ${window.escapeHtml(b.category || 'Cafetería')}</span>
+                    <span class="badge-role"><i class="fa-solid fa-chair"></i> ${tableCount} Mesas</span>
+                    ${gmapsBadge}
+                  </div>
                 </div>
-                <p style="font-size:0.9rem; color:var(--text-muted);">
-                  <i class="fa-solid fa-location-dot"></i> ${window.escapeHtml(b.address || 'Ubicación GPS')}
-                </p>
               </div>
-              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
                 <button type="button" class="btn btn-sm" onclick="window.openManageBiz('${id}')">
-                  <i class="fa-solid fa-gears"></i> Configuración del Restaurante
+                  <i class="fa-solid fa-sliders"></i> Configurar
                 </button>
                 <button type="button" class="btn btn-outline btn-sm" onclick="window.toggleTablesQrPanel('${id}')">
-                  <i class="fa-solid fa-qrcode"></i> ${openTablesPanelByBiz[id] ? 'Ocultar QRs de Mesas' : 'Ver QRs de las ' + tableCount + ' Mesas'}
+                  <i class="fa-solid fa-qrcode"></i> ${openTablesPanelByBiz[id] ? 'Ocultar QRs' : 'QRs (' + tableCount + ')'}
                 </button>
-                <button type="button" class="btn btn-danger btn-sm" onclick="window.deleteBiz('${id}')">
+                <button type="button" class="btn btn-danger btn-sm" onclick="window.deleteBiz('${id}')" title="Eliminar Local">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -1491,20 +1953,22 @@
 
             <!-- Link Único de Pantalla en Vivo + Credenciales de Login para la Dueña -->
             <div class="screen-url-banner">
-              <span style="font-size:0.78rem; font-weight:800; color:var(--primary); text-transform:uppercase;">
-                <i class="fa-solid fa-tv"></i> Link de Pantalla en Vivo y Login para la Dueña del Local:
-              </span>
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                <span style="font-size:0.75rem; font-weight:900; color:var(--primary); text-transform:uppercase;">
+                  <i class="fa-solid fa-tv"></i> Link de Pantalla en Vivo y Login de la Dueña:
+                </span>
+              </div>
               <div class="screen-url-code">${window.escapeHtml(monitorUrl)}</div>
               <div class="creds-pill-row">
                 <span><i class="fa-solid fa-user-shield"></i> <strong>Usuario:</strong> <code>${window.escapeHtml(ownerUser)}</code></span>
-                <span><i class="fa-solid fa-key"></i> <strong>Contraseña:</strong> <code>${window.escapeHtml(ownerPass)}</code></span>
+                <span><i class="fa-solid fa-key"></i> <strong>Clave:</strong> <code>${window.escapeHtml(ownerPass)}</code></span>
               </div>
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button type="button" class="btn btn-success btn-sm" onclick="window.copyBizSharePackage('${id}')">
-                  <i class="fa-solid fa-copy"></i> Copiar Link + Login para la Dueña
+                <button type="button" class="btn btn-success btn-sm" style="flex:1;" onclick="window.copyBizSharePackage('${id}')">
+                  <i class="fa-solid fa-copy"></i> Copiar Link + Login
                 </button>
                 <button type="button" class="btn btn-outline btn-sm" onclick="window.copyTextToClipboard('${monitorUrl}', 'Link de pantalla en vivo copiado')">
-                  <i class="fa-solid fa-link"></i> Copiar Solo Link
+                  <i class="fa-solid fa-link"></i> Solo Link
                 </button>
               </div>
             </div>
@@ -1517,7 +1981,7 @@
     window.deleteBiz = function(id) { 
       window.openConfirmModal(
         "Eliminar Restaurante",
-        "ATENCIÓN: ¿Seguro que deseas eliminar este local y todas sus reseñas, mesas y personal de forma permanente?",
+        "¿Seguro que deseas eliminar este local y todas sus reseñas, mesas y personal de forma permanente?",
         async () => {
           delete globalBizData[id];
           saveLocalBackup(globalBizData);
@@ -1562,7 +2026,7 @@
       const baseUrl = getCleanBaseUrl();
       const tableCount = parseInt(biz.tableCount, 10) || (biz.tables ? Object.keys(biz.tables).length : 10);
 
-      let html = `<div style="font-size:0.85rem; font-weight:800; color:var(--primary); text-transform:uppercase; margin-top:8px;">QRs Individuales de las ${tableCount} Mesas (único acceso de los clientes al local):</div>`;
+      let html = `<div style="font-size:0.82rem; font-weight:800; color:var(--primary); text-transform:uppercase; margin-top:8px;">QRs Individuales de las ${tableCount} Mesas (único acceso de los clientes al local):</div>`;
       html += `<div class="tables-qr-grid">`;
       for (let t = 1; t <= tableCount; t++) {
         const tableQrTarget = `${baseUrl}/?biz=${window.adminActiveBizId}&mesa=${t}`;
@@ -1571,7 +2035,7 @@
           <div class="table-qr-card">
             <div class="table-qr-title"><i class="fa-solid fa-chair"></i> Mesa ${t}</div>
             <img src="${tableQrImg}" alt="QR Mesa ${t}">
-            <a href="${tableQrImg}" target="_blank" download="QR_${window.escapeHtml(biz.name)}_Mesa_${t}" style="font-size:0.78rem; font-weight:700; color:var(--primary); text-decoration:none;">
+            <a href="${tableQrImg}" target="_blank" download="QR_${window.escapeHtml(biz.name)}_Mesa_${t}" style="font-size:0.76rem; font-weight:800; color:var(--primary); text-decoration:none;">
               <i class="fa-solid fa-download"></i> Descargar QR
             </a>
             <button type="button" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:0.72rem; width:100%;" onclick="window.copyTextToClipboard('${tableQrTarget}', 'Link de Mesa ${t} copiado')">
@@ -1701,11 +2165,11 @@
         const avatarSrc = sData.photo || createInitialAvatarBase64(sData.name || 'S');
         
         container.innerHTML += `
-          <div class="list-item" style="padding: 12px 16px; margin-bottom: 8px; flex-direction: row; justify-content: space-between; align-items: center;">
-            <div style="display:flex; align-items:center; gap:16px;">
-              <img src="${avatarSrc}" style="width:50px; height:50px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color);">
+          <div class="list-item" style="padding: 12px 16px; margin-bottom: 6px; flex-direction: row; justify-content: space-between; align-items: center;">
+            <div style="display:flex; align-items:center; gap:14px;">
+              <img src="${avatarSrc}" style="width:46px; height:46px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-strong);">
               <div>
-                <strong style="font-size:1.05rem; color:var(--primary); display: block; margin-bottom:4px;">${window.escapeHtml(sData.name)}</strong>
+                <strong style="font-size:1rem; color:var(--text-main); display: block; margin-bottom:4px;">${window.escapeHtml(sData.name)}</strong>
                 ${roleBadge}
               </div>
             </div>
@@ -1991,7 +2455,7 @@
         container.innerHTML = `
           <div class="empty-requests-box">
             <i class="fa-solid fa-circle-check" style="font-size: 3.2rem; color: #4a7c59; margin-bottom: 12px;"></i>
-            <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.6rem; font-weight: 900; color: var(--color-coal); margin-bottom: 6px;">Todas las mesas están atendidas</h3>
+            <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.6rem; font-weight: 900; color: var(--color-coal); margin-bottom: 6px; justify-content: center;">Todas las mesas están atendidas</h3>
             <p style="color: rgba(34,34,34,0.7); font-weight: 600;">
               Cuando un cliente presione «Llamar al mozo», «Pedir el menú» o «Pedir la cuenta», aparecerá aquí al instante.
             </p>
@@ -2055,15 +2519,15 @@
       for (let i = 1; i <= totalTables; i++) {
         const activeTypes = activeTablesMap[i] || [];
         const hasAlert = activeTypes.length > 0;
-        let stateLabel = "Sin solicitudes";
+        let stateLabel = "Libre / OK";
         if (hasAlert) {
           const labels = activeTypes.map(t => t === 'waiter' ? 'Mozo' : (t === 'menu' ? 'Menú' : 'Cuenta'));
           stateLabel = labels.join(' + ');
         }
         gridHtml += `
           <div class="table-status-tile ${hasAlert ? 'has-alert' : ''}">
-            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:1.05rem; display:block;">Mesa ${i}</span>
-            <span style="font-size:0.75rem; font-weight:700; opacity:0.85; margin-top:4px; display:block;">${window.escapeHtml(stateLabel)}</span>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.98rem; display:block;">Mesa ${i}</span>
+            <span style="font-size:0.72rem; font-weight:700; opacity:0.85; margin-top:3px; display:block;">${window.escapeHtml(stateLabel)}</span>
           </div>`;
       }
       gridEl.innerHTML = gridHtml;
