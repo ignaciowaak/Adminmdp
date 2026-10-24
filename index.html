@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Proof - Administración y Pantalla en Vivo</title>
+  <title>Admin Dashboard - Proof</title>
   
   <!-- Leaflet CSS & JS para Mapas -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -138,16 +138,12 @@
 
     /* Lista de Locales y Personal */
     .list-item { 
-      display: flex; justify-content: space-between; align-items: flex-start; 
-      padding: 20px; border: 1px solid var(--border-color); border-radius: 16px; 
-      margin-bottom: 16px; background: #ffffff; transition: var(--transition);
-      gap: 20px; flex-wrap: wrap;
+      display: flex; flex-direction: column;
+      padding: 22px; border: 1px solid var(--border-color); border-radius: 16px; 
+      margin-bottom: 18px; background: #ffffff; transition: var(--transition);
+      gap: 14px;
     }
     .list-item:hover { box-shadow: var(--shadow-sm); border-color: rgba(15, 52, 115, 0.3); }
-    
-    .qr-box { display: flex; flex-direction: column; align-items: center; gap: 8px; background: #f8f9fa; padding: 12px; border-radius: 12px; border: 1px dashed var(--border-color); min-width: 130px; }
-    .qr-box img { width: 100px; height: 100px; border-radius: 8px; }
-    .qr-box a { color: var(--primary); font-weight: 700; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; gap: 4px; }
 
     .badge-role { background: rgba(15, 52, 115, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-left: 8px; }
 
@@ -157,7 +153,6 @@
       border: 2px solid rgba(15, 52, 115, 0.25);
       border-radius: 12px;
       padding: 14px 16px;
-      margin-bottom: 14px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -173,12 +168,23 @@
       word-break: break-all;
       font-weight: 700;
     }
+    .creds-pill-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.88rem;
+      background: #ffffff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px dashed var(--border-color);
+      align-items: center;
+    }
     .tables-qr-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
       gap: 14px;
-      margin-top: 16px;
-      padding-top: 16px;
+      margin-top: 10px;
+      padding-top: 14px;
       border-top: 1px dashed var(--border-color);
       width: 100%;
     }
@@ -194,8 +200,8 @@
       gap: 6px;
     }
     .table-qr-card img {
-      width: 96px;
-      height: 96px;
+      width: 104px;
+      height: 104px;
       border-radius: 8px;
       background: white;
       padding: 4px;
@@ -207,7 +213,57 @@
       font-size: 0.95rem;
     }
 
-    /* ================= ESTILOS DE LA PANTALLA EN VIVO (BLOQUEADA SIN ACCESO A ADMIN) ================= */
+    /* ================= LOGIN PREVIO Y PANTALLA EN VIVO (SIN ACCESO A ADMIN JAMÁS) ================= */
+    #monitor-login-gate {
+      display: none;
+      min-height: 82vh;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .monitor-login-card {
+      background: var(--color-surface);
+      border: 3px solid var(--color-coal);
+      border-radius: 28px;
+      padding: 36px 28px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 6px 6px 0px var(--color-coal);
+      text-align: center;
+      color: var(--color-coal);
+    }
+    .monitor-login-card input {
+      border: 2px solid var(--color-coal);
+      background: #ffffff;
+      color: var(--color-coal);
+      border-radius: 16px;
+      padding: 16px 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .btn-login-monitor {
+      width: 100%;
+      padding: 16px 24px;
+      border: 2px solid var(--color-coal);
+      border-radius: 100px;
+      background: var(--color-coal);
+      color: var(--color-surface);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 4px 4px 0px var(--color-coal);
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .btn-login-monitor:hover {
+      transform: translateY(-2px);
+      box-shadow: 6px 6px 0px var(--color-coal);
+    }
+
     @keyframes alertPulse {
       0%, 100% { transform: translateY(0); box-shadow: 6px 6px 0px #222222; }
       50% { transform: translateY(-3px); box-shadow: 9px 9px 0px #222222; }
@@ -429,31 +485,32 @@
       <!-- Dominio Base -->
       <div class="card">
         <div class="card-header">
-          <h2><i class="fa-solid fa-link"></i> Configuración de Códigos QR y Link de Pantalla en Vivo</h2>
+          <h2><i class="fa-solid fa-link"></i> Configuración de Dominio para QRs de Mesas y Pantalla en Vivo</h2>
         </div>
         <div class="form-group full" style="margin: 0;">
           <label>Dominio Público (Ej: https://proofofi.netlify.app)</label>
           <input type="text" id="app-domain" value="https://proofofi.netlify.app" oninput="window.renderAdminList()">
-          <div class="file-name" style="text-align: left;"><i class="fa-solid fa-circle-info"></i> Usado para generar el QR de cada mesa y el link único de la pantalla en vivo para el restaurante (sin acceso al panel de admin).</div>
+          <div class="file-name" style="text-align: left;"><i class="fa-solid fa-circle-info"></i> Usado para generar exclusivamente los códigos QR de cada mesa y el link único de la pantalla en vivo del restaurante.</div>
         </div>
       </div>
 
-      <!-- Banner de Link recién generado al crear un restaurante -->
+      <!-- Banner de Link + Login recién generado al crear un restaurante -->
       <div id="last-created-banner" class="card hidden" style="border: 2px solid #2a9d8f; background: #f0fbf9;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-          <h3 style="color: #21867a; margin: 0;"><i class="fa-solid fa-circle-check"></i> ¡Restaurante Creado! Link de Pantalla en Vivo Listo</h3>
+          <h3 style="color: #21867a; margin: 0;"><i class="fa-solid fa-circle-check"></i> ¡Restaurante Creado! Link de Pantalla en Vivo y Login Listos</h3>
           <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('last-created-banner').classList.add('hidden')">Cerrar</button>
         </div>
         <p style="font-size: 0.92rem; color: var(--text-main); margin-bottom: 10px;">
-          Envíale este link al dueño o mozos de <strong id="last-created-name"></strong>. Al entrar desde este link, <strong>solo verán la pantalla de pedidos en vivo</strong> y jamás podrán acceder a tu panel de administrador:
+          Pásale este link y estas credenciales a la dueña de <strong id="last-created-name"></strong>. Cuando entre al link, <strong>deberá iniciar sesión con su usuario y clave</strong> para ver la pantalla en vivo (el panel de admin jamás se muestra):
         </p>
-        <div class="screen-url-code" id="last-created-url" style="margin-bottom: 12px;"></div>
+        <div class="screen-url-code" id="last-created-url" style="margin-bottom: 10px;"></div>
+        <div class="creds-pill-row" style="margin-bottom: 12px;">
+          <span><i class="fa-solid fa-user-shield"></i> <strong>Usuario:</strong> <code id="last-created-user"></code></span>
+          <span><i class="fa-solid fa-key"></i> <strong>Contraseña:</strong> <code id="last-created-pass"></code></span>
+        </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
           <button type="button" class="btn btn-success btn-sm" id="btn-copy-last-created">
-            <i class="fa-solid fa-copy"></i> Copiar Link de Pantalla en Vivo
-          </button>
-          <button type="button" class="btn btn-sm" id="btn-open-last-created">
-            <i class="fa-solid fa-tv"></i> Abrir Pantalla en Vivo
+            <i class="fa-solid fa-copy"></i> Copiar Link + Usuario y Contraseña
           </button>
         </div>
       </div>
@@ -484,10 +541,10 @@
           <textarea id="desc" rows="2" placeholder="Especialistas en café de especialidad..."></textarea>
         </div>
 
-        <!-- SECCIÓN: GOOGLE MAPS Y CANTIDAD DE MESAS -->
+        <!-- SECCIÓN: GOOGLE MAPS, MESAS Y LOGIN DE PANTALLA EN VIVO -->
         <div style="background: #eef4fb; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(15, 52, 115, 0.2);">
-          <h3><i class="fa-solid fa-map-location-dot"></i> Google Maps y Configuración de Mesas</h3>
-          <div class="form-row" style="margin-bottom: 0;">
+          <h3><i class="fa-solid fa-qrcode"></i> Google Maps y Cantidad de Mesas (QRs por Mesa)</h3>
+          <div class="form-row">
             <div class="form-group" style="flex: 2;">
               <label><i class="fa-brands fa-google"></i> URL de Google Maps del Restaurante</label>
               <input type="text" id="googleMapsUrl" placeholder="Ej: https://maps.app.goo.gl/... o enlace de reseñas de Google Maps">
@@ -496,7 +553,24 @@
             <div class="form-group" style="flex: 1; min-width: 180px;">
               <label><i class="fa-solid fa-chair"></i> Cantidad de Mesas</label>
               <input type="number" id="tableCount" min="1" max="200" value="10" placeholder="Ej: 10">
-              <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Se generarán automáticamente las mesas (Mesa 1 a N) y el link único de pantalla en vivo.</span>
+              <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Se generará el QR individual de cada mesa (Mesa 1 a N).</span>
+            </div>
+          </div>
+
+          <div style="border-top: 1px dashed var(--border-color); padding-top: 16px; margin-top: 6px;">
+            <h3 style="margin-bottom: 8px;"><i class="fa-solid fa-user-lock"></i> Crear Login para la Pantalla en Vivo (Dueña / Encargado del Local)</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+              Cuando la dueña del local abra el link de la pantalla en vivo, deberá ingresar este usuario y contraseña para ver los pedidos de las mesas:
+            </p>
+            <div class="form-row" style="margin-bottom: 0;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>Usuario de la Dueña / Local</label>
+                <input type="text" id="newOwnerUser" placeholder="Ej: cafe_central">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>Contraseña de la Pantalla en Vivo</label>
+                <input type="text" id="newOwnerPass" placeholder="Ej: clave1234">
+              </div>
             </div>
           </div>
         </div>
@@ -550,7 +624,7 @@
         </div>
 
         <button type="button" onclick="window.saveBusiness()" class="btn" style="width: 100%; font-size: 1.1rem; padding: 18px;" id="btn-save">
-          <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Restaurante y Generar Link de Pantalla en Vivo + QRs
+          <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Restaurante y Generar QRs de Mesas + Link de Pantalla en Vivo
         </button>
       </div>
 
@@ -565,35 +639,57 @@
       </div>
     </div>
 
-    <!-- ================= SECCIÓN 2: GESTIÓN DE PERSONAL, MESAS Y DUEÑOS ================= -->
+    <!-- ================= SECCIÓN 2: CONFIGURACIÓN DEL RESTAURANTE (PERSONAL, MESAS, LINK Y LOGIN DUEÑA) ================= -->
     <div id="admin-manage-section" class="hidden">
       
       <button type="button" onclick="window.hideAdminManageSection()" class="btn btn-outline" style="margin-bottom: 20px;">
-        <i class="fa-solid fa-arrow-left"></i> Volver a la Lista
+        <i class="fa-solid fa-arrow-left"></i> Volver a la Lista de Locales
       </button>
       
       <div class="card">
         <div class="card-header">
-          <h2 id="manage-biz-title">Gestionar: Nombre del Local</h2>
+          <h2 id="manage-biz-title">Configuración del Local</h2>
         </div>
 
-        <!-- Configuración de Google Maps, Mesas y Link de Monitoreo -->
-        <div style="background: #eef4fb; padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(15, 52, 115, 0.25);">
-          <h3><i class="fa-solid fa-tv"></i> Link de Pantalla en Vivo (Solo Pantalla, Sin Acceso a Admin)</h3>
-          <div class="screen-url-banner" style="background: var(--white);">
-            <span style="font-size: 0.8rem; font-weight: 800; color: var(--primary); text-transform: uppercase;">Link Único de Pantalla en Vivo (para enviar al dueño/mozos):</span>
+        <!-- 1. Link de Pantalla en Vivo y Login de la Dueña -->
+        <div style="background: #eef4fb; padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 2px solid rgba(15, 52, 115, 0.25);">
+          <h3><i class="fa-solid fa-tv"></i> Link de Pantalla en Vivo y Login para la Dueña del Local</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 14px;">
+            Cuando la dueña abra este link, se le pedirá el usuario y la contraseña configurados aquí abajo para ver las solicitudes de las mesas en vivo (el panel de administración nunca es accesible desde ese link):
+          </p>
+
+          <div class="screen-url-banner" style="background: var(--white); margin-bottom: 16px;">
+            <span style="font-size: 0.8rem; font-weight: 800; color: var(--primary); text-transform: uppercase;">Link Único de la Pantalla en Vivo:</span>
             <div class="screen-url-code" id="manage-screen-url-display"></div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
               <button type="button" class="btn btn-success btn-sm" onclick="window.copyActiveBizScreenUrl()">
-                <i class="fa-solid fa-copy"></i> Copiar Link de Pantalla en Vivo
+                <i class="fa-solid fa-copy"></i> Copiar Solo el Link
               </button>
-              <button type="button" class="btn btn-sm" onclick="window.openMonitorForBiz(window.adminActiveBizId)">
-                <i class="fa-solid fa-tv"></i> Abrir Pantalla en Vivo
+              <button type="button" class="btn btn-sm" onclick="window.copyActiveBizLinkAndCredentials()">
+                <i class="fa-solid fa-share-nodes"></i> Copiar Link + Usuario y Contraseña
               </button>
             </div>
           </div>
 
-          <div class="form-row" style="margin-top: 14px; margin-bottom: 8px;">
+          <div class="form-row" style="margin-bottom: 10px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label><i class="fa-solid fa-user-shield"></i> Usuario para la Dueña del Local</label>
+              <input type="text" id="adm-owner-user" placeholder="Ej: admin_central">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label><i class="fa-solid fa-key"></i> Contraseña para la Pantalla en Vivo</label>
+              <input type="text" id="adm-owner-pass" placeholder="Clave de acceso">
+            </div>
+          </div>
+          <button type="button" onclick="window.generateOwnerCredentials()" class="btn btn-sm">
+            <i class="fa-solid fa-lock"></i> Guardar Login de la Dueña para la Pantalla en Vivo
+          </button>
+        </div>
+
+        <!-- 2. Configuración de Google Maps, Cantidad de Mesas y QRs de cada Mesa -->
+        <div style="background: #f8f9fa; padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border-color);">
+          <h3><i class="fa-solid fa-qrcode"></i> Mesas del Restaurante (QRs Individuales) y Google Maps</h3>
+          <div class="form-row" style="margin-bottom: 8px;">
             <div class="form-group" style="flex: 2; margin-bottom: 0;">
               <label>URL de Google Maps del Restaurante</label>
               <input type="text" id="manage-gmaps-url" placeholder="https://maps.app.goo.gl/...">
@@ -603,15 +699,17 @@
               <input type="number" id="manage-table-count" min="1" max="200" value="10">
             </div>
           </div>
-          <button type="button" class="btn btn-sm" style="margin-top: 10px;" onclick="window.updateBizTablesAndMaps()">
-            <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios de Mesas y Google Maps
+          <button type="button" class="btn btn-sm" style="margin-top: 10px; margin-bottom: 14px;" onclick="window.updateBizTablesAndMaps()">
+            <i class="fa-solid fa-floppy-disk"></i> Actualizar Cantidad de Mesas y Google Maps
           </button>
+
+          <div id="manage-tables-qr-container"></div>
         </div>
 
-        <!-- Gestión de Staff -->
-        <div style="background: #f8f9fa; padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border-color);">
-          <h3><i class="fa-solid fa-user-tie"></i> Equipo / Personal</h3>
-          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">Agrega al personal para que los clientes puedan evaluarlos al escanear el QR.</p>
+        <!-- 3. Gestión de Staff -->
+        <div style="background: #f8f9fa; padding: 24px; border-radius: 12px; border: 1px solid var(--border-color);">
+          <h3><i class="fa-solid fa-user-tie"></i> Equipo / Personal del Restaurante</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">Agrega al personal de este restaurante para que los clientes puedan evaluarlos al escanear el QR de su mesa.</p>
           
           <div class="form-row">
             <div class="form-group" style="flex: 2;">
@@ -647,31 +745,35 @@
           <div id="admin-staff-list" style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;"></div>
         </div>
 
-        <!-- Credenciales de Acceso para Dueños -->
-        <div style="background: #f8f9fa; padding: 24px; border-radius: 12px; border: 1px solid var(--border-color);">
-          <h3><i class="fa-solid fa-key"></i> Acceso Dashboard Dueños</h3>
-          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">Genera un usuario para que el dueño de este local vea sus estadísticas privadas.</p>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label>Nombre de Usuario</label>
-              <input type="text" id="adm-owner-user" placeholder="Ej: admin_central">
-            </div>
-            <div class="form-group">
-              <label>Contraseña</label>
-              <input type="text" id="adm-owner-pass" placeholder="Clave segura">
-            </div>
-          </div>
-          
-          <button type="button" onclick="window.generateOwnerCredentials()" class="btn btn-outline" style="width: 100%;">
-            <i class="fa-solid fa-lock"></i> Generar Credenciales
-          </button>
-        </div>
-
       </div>
     </div>
 
-    <!-- ================= SECCIÓN 3: PANTALLA EN VIVO AISLADA (SIN NINGÚN BOTÓN NI ACCESO AL PANEL DE ADMIN) ================= -->
+    <!-- ================= SECCIÓN 3: LOGIN OBLIGATORIO CUANDO SE ABRE EL LINK DE LA PANTALLA EN VIVO ================= -->
+    <div id="monitor-login-gate">
+      <div class="monitor-login-card">
+        <div style="width: 68px; height: 68px; border-radius: 20px; background: var(--color-coal); color: var(--color-surface); display: flex; align-items: center; justify-content: center; font-size: 1.9rem; margin: 0 auto 16px; box-shadow: 4px 4px 0px var(--color-coal);">
+          <i class="fa-solid fa-tv"></i>
+        </div>
+        <div style="font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #4a7c59;">Acceso Exclusivo del Restaurante</div>
+        <h2 id="monitor-login-biz-title" style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.75rem; font-weight: 900; color: var(--color-coal); justify-content: center; margin: 6px 0 10px;">Pantalla en Vivo</h2>
+        <p style="font-size: 0.92rem; font-weight: 600; color: rgba(34,34,34,0.75); margin-bottom: 22px;">
+          Ingresa el usuario y la contraseña de tu local para abrir la pantalla de pedidos de las mesas en vivo.
+        </p>
+
+        <input type="text" id="monitor-login-user" placeholder="Usuario del local" autocomplete="username">
+        <input type="password" id="monitor-login-pass" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter') window.submitMonitorLogin()">
+
+        <div id="monitor-login-error" style="display: none; color: #a84646; font-weight: 800; font-size: 0.88rem; margin-bottom: 12px;">
+          Usuario o contraseña incorrectos.
+        </div>
+
+        <button type="button" class="btn-login-monitor" onclick="window.submitMonitorLogin()">
+          <i class="fa-solid fa-right-to-bracket"></i> ENTRAR A LA PANTALLA EN VIVO
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= SECCIÓN 4: PANTALLA EN VIVO AISLADA (SOLO VISIBLE TRAS INICIAR SESIÓN CON EL LOGIN DEL LOCAL) ================= -->
     <div id="admin-monitor-section" class="hidden">
       <header class="monitor-topbar">
         <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
@@ -689,6 +791,9 @@
           </button>
           <button type="button" class="btn-neo" id="btn-clear-all-requests" onclick="window.attendAllMonitorRequests()" style="display: none;">
             <i class="fa-solid fa-check-double"></i> Marcar Todas Atendidas
+          </button>
+          <button type="button" class="btn-neo" onclick="window.logoutMonitorSession()">
+            <i class="fa-solid fa-lock"></i> Cerrar Sesión
           </button>
         </div>
       </header>
@@ -744,7 +849,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-    import { getDatabase, ref, push, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+    import { getDatabase, ref, push, set, update, onValue, get, remove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAhz1XHoprhhrHyYfuAdIYGMJxm5UsDO-4",
@@ -811,6 +916,7 @@
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
     const initialMonitorBizId = urlParams.get('monitor') || urlParams.get('pantalla') || hashParams.get('monitor') || hashParams.get('pantalla');
     let activeMonitorBizId = null;
+    let monitorAuthenticated = false;
     let monitorSoundEnabled = true;
     let knownMonitorTimestamps = {};
     let monitorInitialLoaded = false;
@@ -835,7 +941,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      // Si se entra desde el link de la pantalla en vivo, bloquear por completo el panel de admin y mostrar solo la pantalla
+      // Si se entra desde el link de la pantalla en vivo, eliminar el panel de admin y mostrar el Login de la dueña
       if (initialMonitorBizId) {
         window.openMonitorForBiz(initialMonitorBizId);
       } else {
@@ -861,14 +967,17 @@
         saveLocalBackup(globalBizData);
         if (!activeMonitorBizId) {
           window.renderAdminList();
-          if (window.adminActiveBizId) window.renderManageStaffList();
-        } else {
+          if (window.adminActiveBizId) {
+            window.renderManageStaffList();
+            window.renderManageTablesQrGrid();
+          }
+        } else if (monitorAuthenticated) {
           renderActiveMonitor();
         }
       }, () => {
         globalBizData = mergeBusinessesData(firebaseSnapshotData);
         if (!activeMonitorBizId) window.renderAdminList();
-        else renderActiveMonitor();
+        else if (monitorAuthenticated) renderActiveMonitor();
       });
 
       if (syncChannel) {
@@ -878,7 +987,7 @@
             if (!activeMonitorBizId) {
               window.renderAdminList();
               if (window.adminActiveBizId) window.renderManageStaffList();
-            } else {
+            } else if (monitorAuthenticated) {
               renderActiveMonitor();
             }
           }
@@ -891,14 +1000,14 @@
           if (!activeMonitorBizId) {
             window.renderAdminList();
             if (window.adminActiveBizId) window.renderManageStaffList();
-          } else {
+          } else if (monitorAuthenticated) {
             renderActiveMonitor();
           }
         }
       });
 
       setInterval(() => {
-        if (activeMonitorBizId) {
+        if (activeMonitorBizId && monitorAuthenticated) {
           globalBizData = mergeBusinessesData(firebaseSnapshotData);
           renderActiveMonitor();
         }
@@ -977,7 +1086,7 @@
       return baseUrl;
     }
 
-    // Construye el Link Único de Pantalla en Vivo para el dueño del restaurante (funciona tanto en /?pantalla=ID como en /admin.html?monitor=ID, sin acceso a admin)
+    // Construye el Link Único de Pantalla en Vivo para la dueña del local
     function buildMonitorUrlForBiz(bizId) {
       const baseUrl = getCleanBaseUrl();
       return `${baseUrl}/?pantalla=${encodeURIComponent(bizId)}`;
@@ -1121,7 +1230,7 @@
     };
 
     /* =======================================================
-       CREAR LOCAL, MESAS, LINK DE PANTALLA EN VIVO Y QRs
+       CREAR LOCAL, MESAS (QRs POR MESA), LINK Y LOGIN DE PANTALLA EN VIVO
        ======================================================= */
     window.saveBusiness = async function() {
       const name = document.getElementById('name').value.trim(); 
@@ -1135,6 +1244,13 @@
       const googleMapsUrl = document.getElementById('googleMapsUrl').value.trim();
       const tableCountRaw = parseInt(document.getElementById('tableCount').value, 10);
       const tableCount = (!isNaN(tableCountRaw) && tableCountRaw > 0) ? tableCountRaw : 10;
+
+      // Usuario y Contraseña para la dueña del local
+      const rawOwnerUser = document.getElementById('newOwnerUser').value.trim();
+      const rawOwnerPass = document.getElementById('newOwnerPass').value.trim();
+      const cleanDefaultUser = name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'local';
+      const ownerUsername = rawOwnerUser || cleanDefaultUser;
+      const ownerPassword = rawOwnerPass || '1234';
 
       const whatsapp = document.getElementById('whatsapp').value.trim();
       const instagram = document.getElementById('instagram').value.trim();
@@ -1196,6 +1312,7 @@
 
         const monitorUrl = buildMonitorUrlForBiz(newBizId);
         const tablesObj = generateTablesObject(tableCount, newBizId);
+        const credentialsObj = { username: ownerUsername, password: ownerPassword };
 
         const payload = { 
           name: name || "",
@@ -1211,6 +1328,7 @@
           tableCount: Number(tableCount),
           tables: tablesObj,
           monitorUrl: monitorUrl,
+          credentials: credentialsObj,
           whatsapp: whatsapp || "",
           instagram: instagram || "",
           facebook: facebook || "",
@@ -1222,6 +1340,7 @@
 
         try {
           await set(ref(db, `businesses/${newBizId}`), payload);
+          await set(ref(db, `owners/${ownerUsername}`), { password: ownerPassword, bizId: newBizId });
         } catch (fbErr) {
           try {
             const lightPhotos = photosArray.filter(p => !p.startsWith('data:video')).slice(0, 3);
@@ -1233,26 +1352,34 @@
               photoBase64: lightPhotos.length > 0 ? lightPhotos[0] : ""
             };
             await set(ref(db, `businesses/${newBizId}`), lightPayload);
+            await set(ref(db, `owners/${ownerUsername}`), { password: ownerPassword, bizId: newBizId });
           } catch (fbErr2) {}
         }
 
         globalBizData[newBizId] = payload;
+        openTablesPanelByBiz[newBizId] = true; // Mostrar automáticamente los QRs de las mesas del nuevo local
         saveLocalBackup(globalBizData);
         window.renderAdminList();
 
         const banner = document.getElementById('last-created-banner');
         document.getElementById('last-created-name').innerText = name;
         document.getElementById('last-created-url').innerText = monitorUrl;
-        document.getElementById('btn-copy-last-created').onclick = () => window.copyTextToClipboard(monitorUrl, "Link de pantalla en vivo copiado");
-        document.getElementById('btn-open-last-created').onclick = () => window.openMonitorForBiz(newBizId);
+        document.getElementById('last-created-user').innerText = ownerUsername;
+        document.getElementById('last-created-pass').innerText = ownerPassword;
+        document.getElementById('btn-copy-last-created').onclick = () => {
+          const shareText = `Pantalla en Vivo - ${name}\nLink: ${monitorUrl}\nUsuario: ${ownerUsername}\nContraseña: ${ownerPassword}`;
+          window.copyTextToClipboard(shareText, "¡Link, usuario y contraseña copiados!");
+        };
         banner.classList.remove('hidden');
 
-        window.showToast(`¡Restaurante guardado! Se generaron ${tableCount} mesas y el link de pantalla en vivo.`);
+        window.showToast(`¡Restaurante guardado! Se generaron los QRs de las ${tableCount} mesas y el login de la pantalla en vivo.`);
         
         document.getElementById('name').value = "";
         document.getElementById('desc').value = "";
         document.getElementById('googleMapsUrl').value = "";
         document.getElementById('tableCount').value = "10";
+        document.getElementById('newOwnerUser').value = "";
+        document.getElementById('newOwnerPass').value = "";
         document.getElementById('hoursDesc').value = "";
         document.getElementById('whatsapp').value = "";
         document.getElementById('instagram').value = "";
@@ -1269,16 +1396,26 @@
         window.showToast("Error inesperado: " + (err && err.message ? err.message : "Intenta nuevamente"));
       } finally {
         btn.disabled = false; 
-        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Guardar Restaurante y Generar Link de Pantalla en Vivo + QRs`;
+        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Guardar Restaurante y Generar QRs de Mesas + Link de Pantalla en Vivo`;
       }
     };
 
     /* =======================================================
-       LISTADO DE LOCALES, LINK DE PANTALLA EN VIVO Y MESAS
+       LISTADO DE LOCALES (SOLO QRs DE MESAS + LINK Y LOGIN DE PANTALLA EN VIVO)
        ======================================================= */
     window.toggleTablesQrPanel = function(bizId) {
       openTablesPanelByBiz[bizId] = !openTablesPanelByBiz[bizId];
       window.renderAdminList();
+    };
+
+    window.copyBizSharePackage = function(bizId) {
+      const b = globalBizData[bizId];
+      if (!b) return;
+      const monitorUrl = buildMonitorUrlForBiz(bizId);
+      const u = (b.credentials && b.credentials.username) ? b.credentials.username : 'No asignado';
+      const p = (b.credentials && b.credentials.password) ? b.credentials.password : 'No asignada';
+      const msg = `Pantalla en Vivo - ${b.name}\nLink: ${monitorUrl}\nUsuario: ${u}\nContraseña: ${p}`;
+      window.copyTextToClipboard(msg, "¡Link, usuario y contraseña copiados!");
     };
 
     window.renderAdminList = function() {
@@ -1296,10 +1433,10 @@
 
       sortedBiz.forEach(([id, b]) => {
         if (!b) return;
-        const qrUrl = `${baseUrl}/?biz=${id}`;
-        const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrUrl)}&margin=10`;
         const monitorUrl = buildMonitorUrlForBiz(id);
         const tableCount = parseInt(b.tableCount, 10) || (b.tables ? Object.keys(b.tables).length : 10);
+        const ownerUser = (b.credentials && b.credentials.username) ? b.credentials.username : 'Sin usuario';
+        const ownerPass = (b.credentials && b.credentials.password) ? b.credentials.password : 'Sin clave';
 
         let tablesGridHtml = "";
         if (openTablesPanelByBiz[id] && tableCount > 0) {
@@ -1312,10 +1449,10 @@
                 <div class="table-qr-title"><i class="fa-solid fa-chair"></i> Mesa ${t}</div>
                 <img src="${tableQrImg}" alt="QR Mesa ${t}">
                 <a href="${tableQrImg}" target="_blank" download="QR_${window.escapeHtml(b.name)}_Mesa_${t}" style="font-size:0.78rem; font-weight:700; color:var(--primary); text-decoration:none;">
-                  <i class="fa-solid fa-download"></i> Descargar QR
+                  <i class="fa-solid fa-download"></i> Descargar QR Mesa ${t}
                 </a>
-                <button type="button" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:0.72rem; width:100%;" onclick="window.copyTextToClipboard('${tableQrTarget}', 'Link de Mesa ${t} copiado')">
-                  <i class="fa-solid fa-link"></i> Copiar Link
+                <button type="button" class="btn btn-outline btn-sm" style="padding:5px 8px; font-size:0.72rem; width:100%;" onclick="window.copyTextToClipboard('${tableQrTarget}', 'Link de Mesa ${t} copiado')">
+                  <i class="fa-solid fa-link"></i> Copiar Link Mesa ${t}
                 </button>
               </div>`;
           }
@@ -1328,51 +1465,50 @@
 
         list.innerHTML += `
           <div class="list-item">
-            <div style="flex:1; min-width: 260px;">
-              <div style="display:flex; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
-                <h3 style="margin-bottom:0;">${window.escapeHtml(b.name)}</h3>
-                <span class="badge-role"><i class="fa-solid fa-chair"></i> ${tableCount} Mesas</span>
-                ${gmapsBadge}
-              </div>
-              <p style="margin-bottom:12px; font-size:0.9rem; color:var(--text-muted);">
-                <i class="fa-solid fa-location-dot"></i> ${window.escapeHtml(b.address || 'Ubicación GPS')}
-              </p>
-
-              <!-- Link Único de Pantalla en Vivo (sin acceso al panel de admin) -->
-              <div class="screen-url-banner">
-                <span style="font-size:0.78rem; font-weight:800; color:var(--primary); text-transform:uppercase;">
-                  <i class="fa-solid fa-tv"></i> Link de Pantalla en Vivo (Para el Dueño / Mozos - Sin acceso a Admin):
-                </span>
-                <div class="screen-url-code">${window.escapeHtml(monitorUrl)}</div>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                  <button type="button" class="btn btn-success btn-sm" onclick="window.copyTextToClipboard('${monitorUrl}', 'Link de pantalla en vivo copiado')">
-                    <i class="fa-solid fa-copy"></i> Copiar Link de Pantalla en Vivo
-                  </button>
-                  <button type="button" class="btn btn-sm" onclick="window.openMonitorForBiz('${id}')">
-                    <i class="fa-solid fa-display"></i> Abrir Pantalla en Vivo
-                  </button>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+              <div>
+                <div style="display:flex; align-items:center; flex-wrap:wrap; margin-bottom:4px;">
+                  <h3 style="margin-bottom:0;">${window.escapeHtml(b.name)}</h3>
+                  <span class="badge-role"><i class="fa-solid fa-chair"></i> ${tableCount} Mesas (QRs individuales)</span>
+                  ${gmapsBadge}
                 </div>
+                <p style="font-size:0.9rem; color:var(--text-muted);">
+                  <i class="fa-solid fa-location-dot"></i> ${window.escapeHtml(b.address || 'Ubicación GPS')}
+                </p>
               </div>
-
-              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button type="button" class="btn btn-sm" onclick="window.openManageBiz('${id}')">
-                  <i class="fa-solid fa-users-gear"></i> Gestionar Personal, Mesas y Accesos
+                  <i class="fa-solid fa-gears"></i> Configuración del Restaurante
                 </button>
                 <button type="button" class="btn btn-outline btn-sm" onclick="window.toggleTablesQrPanel('${id}')">
-                  <i class="fa-solid fa-qrcode"></i> ${openTablesPanelByBiz[id] ? 'Ocultar QRs por Mesa' : 'Ver QRs de las ' + tableCount + ' Mesas'}
+                  <i class="fa-solid fa-qrcode"></i> ${openTablesPanelByBiz[id] ? 'Ocultar QRs de Mesas' : 'Ver QRs de las ' + tableCount + ' Mesas'}
                 </button>
                 <button type="button" class="btn btn-danger btn-sm" onclick="window.deleteBiz('${id}')">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
             </div>
-            <div class="qr-box">
-              <span style="font-size:0.75rem; font-weight:800; color:var(--primary); text-transform:uppercase;">QR General</span>
-              <img src="${qrSrc}" alt="QR del Local">
-              <a href="${qrSrc}" target="_blank" download="QR_${window.escapeHtml(b.name)}">
-                <i class="fa-solid fa-download"></i> Descargar QR
-              </a>
+
+            <!-- Link Único de Pantalla en Vivo + Credenciales de Login para la Dueña -->
+            <div class="screen-url-banner">
+              <span style="font-size:0.78rem; font-weight:800; color:var(--primary); text-transform:uppercase;">
+                <i class="fa-solid fa-tv"></i> Link de Pantalla en Vivo y Login para la Dueña del Local:
+              </span>
+              <div class="screen-url-code">${window.escapeHtml(monitorUrl)}</div>
+              <div class="creds-pill-row">
+                <span><i class="fa-solid fa-user-shield"></i> <strong>Usuario:</strong> <code>${window.escapeHtml(ownerUser)}</code></span>
+                <span><i class="fa-solid fa-key"></i> <strong>Contraseña:</strong> <code>${window.escapeHtml(ownerPass)}</code></span>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-success btn-sm" onclick="window.copyBizSharePackage('${id}')">
+                  <i class="fa-solid fa-copy"></i> Copiar Link + Login para la Dueña
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="window.copyTextToClipboard('${monitorUrl}', 'Link de pantalla en vivo copiado')">
+                  <i class="fa-solid fa-link"></i> Copiar Solo Link
+                </button>
+              </div>
             </div>
+
             ${tablesGridHtml}
           </div>`;
       });
@@ -1393,7 +1529,7 @@
     };
 
     /* =======================================================
-       GESTIÓN DE PERSONAL, MESAS Y MAPS (VISTA SECUNDARIA)
+       CONFIGURACIÓN DEL LOCAL (LINK PANTALLA, LOGIN DUEÑA, QRs MESAS Y PERSONAL)
        ======================================================= */
     window.openManageBiz = function(id) {
       window.adminActiveBizId = id;
@@ -1403,20 +1539,59 @@
       document.getElementById('admin-main-section').classList.add('hidden');
       document.getElementById('admin-monitor-section').classList.add('hidden');
       document.getElementById('admin-manage-section').classList.remove('hidden');
-      document.getElementById('manage-biz-title').innerText = `Gestión: ${biz.name}`;
+      document.getElementById('manage-biz-title').innerText = `Configuración: ${biz.name}`;
 
       const monitorUrl = buildMonitorUrlForBiz(id);
       document.getElementById('manage-screen-url-display').innerText = monitorUrl;
       document.getElementById('manage-gmaps-url').value = biz.googleMapsUrl || '';
       document.getElementById('manage-table-count').value = biz.tableCount || (biz.tables ? Object.keys(biz.tables).length : 10);
       
+      document.getElementById('adm-owner-user').value = (biz.credentials && biz.credentials.username) ? biz.credentials.username : '';
+      document.getElementById('adm-owner-pass').value = (biz.credentials && biz.credentials.password) ? biz.credentials.password : '';
+
+      window.renderManageTablesQrGrid();
       window.renderManageStaffList();
+    };
+
+    window.renderManageTablesQrGrid = function() {
+      const container = document.getElementById('manage-tables-qr-container');
+      if (!container || !window.adminActiveBizId) return;
+      const biz = globalBizData[window.adminActiveBizId];
+      if (!biz) return;
+
+      const baseUrl = getCleanBaseUrl();
+      const tableCount = parseInt(biz.tableCount, 10) || (biz.tables ? Object.keys(biz.tables).length : 10);
+
+      let html = `<div style="font-size:0.85rem; font-weight:800; color:var(--primary); text-transform:uppercase; margin-top:8px;">QRs Individuales de las ${tableCount} Mesas (único acceso de los clientes al local):</div>`;
+      html += `<div class="tables-qr-grid">`;
+      for (let t = 1; t <= tableCount; t++) {
+        const tableQrTarget = `${baseUrl}/?biz=${window.adminActiveBizId}&mesa=${t}`;
+        const tableQrImg = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(tableQrTarget)}&margin=8`;
+        html += `
+          <div class="table-qr-card">
+            <div class="table-qr-title"><i class="fa-solid fa-chair"></i> Mesa ${t}</div>
+            <img src="${tableQrImg}" alt="QR Mesa ${t}">
+            <a href="${tableQrImg}" target="_blank" download="QR_${window.escapeHtml(biz.name)}_Mesa_${t}" style="font-size:0.78rem; font-weight:700; color:var(--primary); text-decoration:none;">
+              <i class="fa-solid fa-download"></i> Descargar QR
+            </a>
+            <button type="button" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:0.72rem; width:100%;" onclick="window.copyTextToClipboard('${tableQrTarget}', 'Link de Mesa ${t} copiado')">
+              <i class="fa-solid fa-link"></i> Copiar Link Mesa ${t}
+            </button>
+          </div>`;
+      }
+      html += `</div>`;
+      container.innerHTML = html;
     };
 
     window.copyActiveBizScreenUrl = function() {
       if (!window.adminActiveBizId) return;
       const monitorUrl = buildMonitorUrlForBiz(window.adminActiveBizId);
       window.copyTextToClipboard(monitorUrl, "Link de pantalla en vivo copiado");
+    };
+
+    window.copyActiveBizLinkAndCredentials = function() {
+      if (!window.adminActiveBizId) return;
+      window.copyBizSharePackage(window.adminActiveBizId);
     };
 
     window.updateBizTablesAndMaps = async function() {
@@ -1440,6 +1615,7 @@
           ...updates
         };
         saveLocalBackup(globalBizData);
+        window.renderManageTablesQrGrid();
         window.renderAdminList();
       }
 
@@ -1447,7 +1623,7 @@
         await update(ref(db, `businesses/${window.adminActiveBizId}`), updates);
       } catch (e) {}
 
-      window.showToast(`Actualizado: ${tableCount} mesas y URL de Google Maps guardada`);
+      window.showToast(`Actualizado: ${tableCount} mesas con sus QRs y URL de Google Maps guardada`);
     };
 
     window.hideAdminManageSection = function() {
@@ -1525,7 +1701,7 @@
         const avatarSrc = sData.photo || createInitialAvatarBase64(sData.name || 'S');
         
         container.innerHTML += `
-          <div class="list-item" style="padding: 12px 16px; margin-bottom: 8px; align-items: center;">
+          <div class="list-item" style="padding: 12px 16px; margin-bottom: 8px; flex-direction: row; justify-content: space-between; align-items: center;">
             <div style="display:flex; align-items:center; gap:16px;">
               <img src="${avatarSrc}" style="width:50px; height:50px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color);">
               <div>
@@ -1557,17 +1733,18 @@
     };
 
     /* =======================================================
-       CREDENCIALES DASHBOARD DUEÑOS
+       CREDENCIALES LOGIN PANTALLA EN VIVO PARA LA DUEÑA
        ======================================================= */
     window.generateOwnerCredentials = async function() {
       const user = document.getElementById('adm-owner-user').value.trim();
       const pass = document.getElementById('adm-owner-pass').value.trim();
       
-      if(!user || !pass) return window.showToast("Ingresa un usuario y contraseña");
+      if(!user || !pass) return window.showToast("Ingresa un usuario y contraseña para la dueña");
 
       if (globalBizData[window.adminActiveBizId]) {
         globalBizData[window.adminActiveBizId].credentials = { username: user, password: pass };
         saveLocalBackup(globalBizData);
+        window.renderAdminList();
       }
 
       try {
@@ -1581,13 +1758,11 @@
         });
       } catch(e) {}
 
-      window.showToast("Credenciales de acceso creadas/actualizadas");
-      document.getElementById('adm-owner-user').value = "";
-      document.getElementById('adm-owner-pass').value = "";
+      window.showToast("¡Login de la Pantalla en Vivo guardado!");
     };
 
     /* =========================================================================
-       PANTALLA EN VIVO AISLADA Y BLOQUEADA (SIN BOTÓN NI ACCESO AL PANEL ADMIN)
+       PANTALLA EN VIVO CON LOGIN OBLIGATORIO (SIN ACCESO AL PANEL DE ADMIN JAMÁS)
        ========================================================================= */
     function playMonitorChime() {
       if (!monitorSoundEnabled) return;
@@ -1636,7 +1811,6 @@
       monitorInitialLoaded = false;
 
       // SEGURIDAD TOTAL: Eliminar físicamente del DOM el panel de administración
-      // para que jamás se pueda volver ni acceder al panel de administrador desde la pantalla en vivo
       const mainSec = document.getElementById('admin-main-section');
       const manageSec = document.getElementById('admin-manage-section');
       if (mainSec) mainSec.remove();
@@ -1644,14 +1818,22 @@
 
       document.body.classList.add('monitor-mode-active');
       document.getElementById('main-container').classList.add('monitor-wide');
-      document.getElementById('admin-monitor-section').classList.remove('hidden');
 
-      // Listener directo en tiempo real al nodo del restaurante y a sus tableRequests
+      const sessionKey = `proof_live_auth_${bizId}`;
+      monitorAuthenticated = (sessionStorage.getItem(sessionKey) === 'true');
+
+      if (globalBizData[bizId]) {
+        const titleEl = document.getElementById('monitor-login-biz-title');
+        if (titleEl) titleEl.innerText = globalBizData[bizId].name || "Pantalla en Vivo";
+      }
+
       onValue(ref(db, `businesses/${bizId}`), (snap) => {
         if (snap.exists()) {
           globalBizData[bizId] = snap.val();
           saveLocalBackup(globalBizData);
-          renderActiveMonitor();
+          const titleEl = document.getElementById('monitor-login-biz-title');
+          if (titleEl) titleEl.innerText = globalBizData[bizId].name || "Pantalla en Vivo";
+          if (monitorAuthenticated) renderActiveMonitor();
         }
       });
 
@@ -1659,10 +1841,74 @@
         const reqs = snap.val() || {};
         if (!globalBizData[bizId]) globalBizData[bizId] = { name: "Restaurante", tableCount: 10 };
         globalBizData[bizId].tableRequests = reqs;
-        renderActiveMonitor();
+        if (monitorAuthenticated) renderActiveMonitor();
       });
 
-      renderActiveMonitor();
+      if (monitorAuthenticated) {
+        document.getElementById('monitor-login-gate').style.display = 'none';
+        document.getElementById('admin-monitor-section').classList.remove('hidden');
+        renderActiveMonitor();
+      } else {
+        document.getElementById('admin-monitor-section').classList.add('hidden');
+        document.getElementById('monitor-login-gate').style.display = 'flex';
+      }
+    };
+
+    window.submitMonitorLogin = async function() {
+      if (!activeMonitorBizId) return;
+      const uInput = document.getElementById('monitor-login-user').value.trim();
+      const pInput = document.getElementById('monitor-login-pass').value.trim();
+      const errEl = document.getElementById('monitor-login-error');
+      errEl.style.display = 'none';
+
+      if (!uInput || !pInput) {
+        errEl.innerText = "Ingresa el usuario y la contraseña del restaurante.";
+        errEl.style.display = 'block';
+        return;
+      }
+
+      const biz = globalBizData[activeMonitorBizId] || {};
+      const creds = biz.credentials || null;
+      let valid = false;
+
+      if (creds && creds.username && creds.password) {
+        if (creds.username.toLowerCase() === uInput.toLowerCase() && creds.password === pInput) {
+          valid = true;
+        }
+      }
+
+      if (!valid) {
+        try {
+          const ownerSnap = await get(ref(db, `owners/${uInput}`));
+          if (ownerSnap.exists()) {
+            const ownerVal = ownerSnap.val();
+            if (ownerVal && ownerVal.password === pInput && (!ownerVal.bizId || ownerVal.bizId === activeMonitorBizId)) {
+              valid = true;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (valid) {
+        monitorAuthenticated = true;
+        sessionStorage.setItem(`proof_live_auth_${activeMonitorBizId}`, 'true');
+        document.getElementById('monitor-login-gate').style.display = 'none';
+        document.getElementById('admin-monitor-section').classList.remove('hidden');
+        renderActiveMonitor();
+        window.showToast("¡Bienvenida! Pantalla en vivo activada.");
+      } else {
+        errEl.innerText = "Usuario o contraseña incorrectos. Verifica las credenciales creadas en el panel de administración.";
+        errEl.style.display = 'block';
+      }
+    };
+
+    window.logoutMonitorSession = function() {
+      if (!activeMonitorBizId) return;
+      monitorAuthenticated = false;
+      sessionStorage.removeItem(`proof_live_auth_${activeMonitorBizId}`);
+      document.getElementById('monitor-login-pass').value = "";
+      document.getElementById('admin-monitor-section').classList.add('hidden');
+      document.getElementById('monitor-login-gate').style.display = 'flex';
     };
 
     function formatExactRequestSentence(tableNumber, type) {
@@ -1684,7 +1930,7 @@
     }
 
     function renderActiveMonitor() {
-      if (!activeMonitorBizId) return;
+      if (!activeMonitorBizId || !monitorAuthenticated) return;
       const biz = globalBizData[activeMonitorBizId];
       if (!biz) {
         document.getElementById('monitor-biz-name').innerText = "Conectando con el restaurante...";
