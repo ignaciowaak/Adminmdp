@@ -844,7 +844,7 @@
           <span>Dominio Público para QRs y Pantallas:</span>
         </div>
         <div class="domain-input-wrap">
-          <input type="text" id="app-domain" value="https://proofofi.netlify.app" oninput="window.renderAdminList()">
+          <input type="text" id="app-domain" value="https://proofmdp.netlify.app" oninput="window.renderAdminList()">
         </div>
       </div>
 
@@ -1513,7 +1513,7 @@
 
     function getCleanBaseUrl() {
       const el = document.getElementById('app-domain');
-      let baseUrl = (el && el.value ? el.value.trim() : '') || 'https://proofofi.netlify.app';
+      let baseUrl = (el && el.value ? el.value.trim() : '') || 'https://proofmdp.netlify.app';
       if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
       if (!baseUrl.startsWith('http')) baseUrl = 'https://' + baseUrl;
       return baseUrl;
