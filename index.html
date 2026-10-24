@@ -1383,183 +1383,6 @@
 
     const FB_DB_URL = "https://the-pic-c437e-default-rtdb.firebaseio.com";
 
-    // Sincroniza cualquier negocio guardado localmente hacia Firebase para que los links de QRs abran en cualquier navegador/dispositivo
-    async function syncSingleBizToCloud(bizId, bizObj) {
-      if (!bizId || !bizObj || !bizObj.name) return;
-      const updatedMonitorUrl = buildMonitorUrlForBiz(bizId);
-      const payloadToSync = {
-        ...bizObj,
-        monitorUrl: updatedMonitorUrl
-      };
-      try {
-        const res = await fetch(`${FB_DB_URL}/businesses/${encodeURIComponent(bizId)}.json`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payloadToSync)
-        });
-        if (!res.ok) throw new Error("PUT failed");
-      } catch (e) {
-        try {
-          await set(ref(db, `businesses/${bizId}`), payloadToSync);
-        } catch (err2) {
-          try {
-            const lightPhotos = Array.isArray(bizObj.photos) ? bizObj.photos.filter(p => p && !p.startsWith('data:video')).slice(0, 3) : [];
-            const lightPayload = {
-              ...payloadToSync,
-              menu: (bizObj.menu && bizObj.menu.startsWith('data:application/pdf') && bizObj.menu.length > 2500000) ? "" : (bizObj.menu || ""),
-              photos: lightPhotos,
-              photoBase64: lightPhotos.length > 0 ? lightPhotos[0] : ""
-            };
-            await fetch(`${FB_DB_URL}/businesses/${encodeURIComponent(bizId)}.json`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(lightPayload)
-            });
-          } catch (err3) {}
-        }
-      }
-      if (bizObj.credentials && bizObj.credentials.username && bizObj.credentials.password) {
-        try {
-          fetch(`${FB_DB_URL}/owners/${encodeURIComponent(bizObj.credentials.username)}.json`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: bizObj.credentials.password, bizId: bizId })
-          }).catch(() => {});
-        } catch (e) {}
-      }
-    }
-
-    async function ensureAllLocalBusinessesSyncedToCloud(cloudData) {
-      const localData = loadLocalBackup();
-      const cloud = cloudData || {};
-      for (const [bId, bVal] of Object.entries(localData)) {
-        if (bVal && bVal.name && (!cloud[bId] || !cloud[bId].name || (cloud[bId].monitorUrl && cloud[bId].monitorUrl.includes('proofofi.netlify.app')))) {
-          await syncSingleBizToCloud(bId, bVal);
-        }
-      }
-    }
-
-    function initProofAdminApp() {
-      if (window.__proofAdminBooted) return;
-      window.__proofAdminBooted = true;
-
-      const domInput = document.getElementById('app-domain');
-      if (domInput && (!domInput.value || domInput.value.includes('proofofi.netlify.app'))) {
-        domInput.value = 'https://proofmdp.netlify.app';
-      }
-
-      const userInp = document.getElementById('newOwnerUser');
-      if (userInp) {
-        userInp.addEventListener('input', () => { userInp.dataset.manualEdited = 'true'; });
-      }
-
-      if (initialMonitorBizId) {
-        window.openMonitorForBiz(initialMonitorBizId);
-      } else {
-        initLeafletMap();
-      }
-
-      setInterval(() => {
-        const cl = document.getElementById('monitor-clock-display');
-        if (cl) cl.innerText = new Date().toLocaleTimeString('es-AR', { hour12: false });
-      }, 1000);
-
-      const acceptBtn = document.getElementById('confirm-accept-btn');
-      if (acceptBtn) {
-        acceptBtn.addEventListener('click', async () => {
-          const cb = pendingConfirmCallback;
-          window.closeConfirmModal();
-          if (cb) await cb();
-        });
-      }
-
-      if (!initialMonitorBizId) {
-        window.renderAdminList();
-      }
-
-      // Carga rápida inicial por HTTPS REST además de WebSockets
-      fetch(`${FB_DB_URL}/businesses.json`, { cache: 'no-store' })
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (data && typeof data === 'object') {
-            firebaseSnapshotData = data;
-            globalBizData = mergeBusinessesData(firebaseSnapshotData);
-            saveLocalBackup(globalBizData);
-            if (!activeMonitorBizId) {
-              window.renderAdminList();
-              if (window.adminActiveBizId) {
-                window.renderManageStaffList();
-                window.renderManageTablesQrGrid();
-              }
-            } else if (monitorAuthenticated) {
-              renderActiveMonitor();
-            }
-          }
-          ensureAllLocalBusinessesSyncedToCloud(firebaseSnapshotData);
-        })
-        .catch(() => {
-          ensureAllLocalBusinessesSyncedToCloud(firebaseSnapshotData);
-        });
-
-      onValue(ref(db, 'businesses'), (snapshot) => {
-        firebaseSnapshotData = snapshot.val() || {};
-        globalBizData = mergeBusinessesData(firebaseSnapshotData);
-        saveLocalBackup(globalBizData);
-        ensureAllLocalBusinessesSyncedToCloud(firebaseSnapshotData);
-        if (!activeMonitorBizId) {
-          window.renderAdminList();
-          if (window.adminActiveBizId) {
-            window.renderManageStaffList();
-            window.renderManageTablesQrGrid();
-          }
-        } else if (monitorAuthenticated) {
-          renderActiveMonitor();
-        }
-      }, () => {
-        globalBizData = mergeBusinessesData(firebaseSnapshotData);
-        if (!activeMonitorBizId) window.renderAdminList();
-        else if (monitorAuthenticated) renderActiveMonitor();
-      });
-
-      if (syncChannel) {
-        syncChannel.onmessage = (ev) => {
-          if (ev.data && ev.data.type === 'sync_businesses') {
-            globalBizData = mergeBusinessesData(firebaseSnapshotData);
-            if (!activeMonitorBizId) {
-              window.renderAdminList();
-              if (window.adminActiveBizId) window.renderManageStaffList();
-            } else if (monitorAuthenticated) {
-              renderActiveMonitor();
-            }
-          }
-        };
-      }
-
-      window.addEventListener('storage', (ev) => {
-        if (ev.key === LOCAL_STORAGE_KEY) {
-          globalBizData = mergeBusinessesData(firebaseSnapshotData);
-          if (!activeMonitorBizId) {
-            window.renderAdminList();
-            if (window.adminActiveBizId) window.renderManageStaffList();
-          } else if (monitorAuthenticated) {
-            renderActiveMonitor();
-          }
-        }
-      });
-
-      setInterval(() => {
-        if (activeMonitorBizId && monitorAuthenticated) {
-          globalBizData = mergeBusinessesData(firebaseSnapshotData);
-          renderActiveMonitor();
-        }
-      }, 2000);
-    }
-
-    if (document.readyState === 'loading') {
-      window.addEventListener('DOMContentLoaded', initProofAdminApp);
-    } else {
-      initProofAdminApp();
-    }
 
     function initLeafletMap() {
       if (adminMap || !document.getElementById('admin-map')) return;
@@ -1898,7 +1721,6 @@
           timestamp: Date.now()
         };
 
-        await syncSingleBizToCloud(newBizId, payload);
         try {
           await set(ref(db, `businesses/${newBizId}`), payload);
           await set(ref(db, `owners/${ownerUsername}`), { password: ownerPassword, bizId: newBizId });
@@ -2680,6 +2502,164 @@
       window.showToast("Todas las mesas fueron marcadas como atendidas");
     };
 
+
+    // Sincroniza cualquier negocio guardado localmente hacia Firebase sin bloquear la interfaz
+    async function syncSingleBizToCloud(bizId, bizObj) {
+      if (!bizId || !bizObj || !bizObj.name) return;
+      const updatedMonitorUrl = buildMonitorUrlForBiz(bizId);
+      const payloadToSync = {
+        ...bizObj,
+        monitorUrl: updatedMonitorUrl
+      };
+      try {
+        await set(ref(db, `businesses/${bizId}`), payloadToSync);
+      } catch (err2) {
+        try {
+          const lightPhotos = Array.isArray(bizObj.photos) ? bizObj.photos.filter(p => p && !p.startsWith('data:video')).slice(0, 3) : [];
+          const lightPayload = {
+            ...payloadToSync,
+            menu: (bizObj.menu && bizObj.menu.startsWith('data:application/pdf') && bizObj.menu.length > 2500000) ? "" : (bizObj.menu || ""),
+            photos: lightPhotos,
+            photoBase64: lightPhotos.length > 0 ? lightPhotos[0] : ""
+          };
+          await set(ref(db, `businesses/${bizId}`), lightPayload);
+        } catch (err3) {}
+      }
+      if (bizObj.credentials && bizObj.credentials.username && bizObj.credentials.password) {
+        try {
+          await set(ref(db, `owners/${bizObj.credentials.username}`), {
+            password: bizObj.credentials.password,
+            bizId: bizId
+          });
+        } catch (e) {}
+      }
+    }
+
+    async function ensureAllLocalBusinessesSyncedToCloud(cloudData) {
+      const localData = loadLocalBackup();
+      const cloud = cloudData || {};
+      for (const [bId, bVal] of Object.entries(localData)) {
+        if (bVal && bVal.name && (!cloud[bId] || !cloud[bId].name || (cloud[bId].monitorUrl && cloud[bId].monitorUrl.includes('proofofi.netlify.app')))) {
+          syncSingleBizToCloud(bId, bVal).catch(() => {});
+        }
+      }
+    }
+
+    function initProofAdminApp() {
+      if (window.__proofAdminBooted) return;
+      window.__proofAdminBooted = true;
+
+      const domInput = document.getElementById('app-domain');
+      if (domInput && (!domInput.value || domInput.value.includes('proofofi.netlify.app'))) {
+        domInput.value = 'https://proofmdp.netlify.app';
+      }
+
+      const userInp = document.getElementById('newOwnerUser');
+      if (userInp) {
+        userInp.addEventListener('input', () => { userInp.dataset.manualEdited = 'true'; });
+      }
+
+      if (initialMonitorBizId) {
+        window.openMonitorForBiz(initialMonitorBizId);
+      } else {
+        initLeafletMap();
+      }
+
+      setInterval(() => {
+        const cl = document.getElementById('monitor-clock-display');
+        if (cl) cl.innerText = new Date().toLocaleTimeString('es-AR', { hour12: false });
+      }, 1000);
+
+      const acceptBtn = document.getElementById('confirm-accept-btn');
+      if (acceptBtn) {
+        acceptBtn.addEventListener('click', async () => {
+          const cb = pendingConfirmCallback;
+          window.closeConfirmModal();
+          if (cb) await cb();
+        });
+      }
+
+      if (!initialMonitorBizId) {
+        window.renderAdminList();
+      }
+
+      // Consulta directa con Firebase SDK + listener en tiempo real
+      get(ref(db, 'businesses')).then((snapshot) => {
+        if (snapshot && snapshot.exists()) {
+          firebaseSnapshotData = snapshot.val() || {};
+          globalBizData = mergeBusinessesData(firebaseSnapshotData);
+          saveLocalBackup(globalBizData);
+          if (!activeMonitorBizId) {
+            window.renderAdminList();
+            if (window.adminActiveBizId) {
+              window.renderManageStaffList();
+              window.renderManageTablesQrGrid();
+            }
+          } else if (monitorAuthenticated) {
+            renderActiveMonitor();
+          }
+        }
+      }).catch(() => {});
+
+      onValue(ref(db, 'businesses'), (snapshot) => {
+        firebaseSnapshotData = snapshot.val() || {};
+        globalBizData = mergeBusinessesData(firebaseSnapshotData);
+        saveLocalBackup(globalBizData);
+        ensureAllLocalBusinessesSyncedToCloud(firebaseSnapshotData);
+        if (!activeMonitorBizId) {
+          window.renderAdminList();
+          if (window.adminActiveBizId) {
+            window.renderManageStaffList();
+            window.renderManageTablesQrGrid();
+          }
+        } else if (monitorAuthenticated) {
+          renderActiveMonitor();
+        }
+      }, () => {
+        globalBizData = mergeBusinessesData(firebaseSnapshotData);
+        if (!activeMonitorBizId) window.renderAdminList();
+        else if (monitorAuthenticated) renderActiveMonitor();
+      });
+
+      if (syncChannel) {
+        syncChannel.onmessage = (ev) => {
+          if (ev.data && ev.data.type === 'sync_businesses') {
+            globalBizData = mergeBusinessesData(firebaseSnapshotData);
+            if (!activeMonitorBizId) {
+              window.renderAdminList();
+              if (window.adminActiveBizId) window.renderManageStaffList();
+            } else if (monitorAuthenticated) {
+              renderActiveMonitor();
+            }
+          }
+        };
+      }
+
+      window.addEventListener('storage', (ev) => {
+        if (ev.key === LOCAL_STORAGE_KEY) {
+          globalBizData = mergeBusinessesData(firebaseSnapshotData);
+          if (!activeMonitorBizId) {
+            window.renderAdminList();
+            if (window.adminActiveBizId) window.renderManageStaffList();
+          } else if (monitorAuthenticated) {
+            renderActiveMonitor();
+          }
+        }
+      });
+
+      setInterval(() => {
+        if (activeMonitorBizId && monitorAuthenticated) {
+          globalBizData = mergeBusinessesData(firebaseSnapshotData);
+          renderActiveMonitor();
+        }
+      }, 2000);
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', initProofAdminApp);
+    } else {
+      initProofAdminApp();
+    }
   </script>
 </body>
 </html>
